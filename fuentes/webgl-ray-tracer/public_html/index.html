@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+   <title>PCGW</title>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+   <!-- formato: 
+         link href="https://fonts.googleapis.com/css2?family=${family_name}${weight_text}&display=swap"
+         donde weight_text == :wght@400;500     (400 para texto normal, 500 para bold)
+   -->
+   <link href="https://fonts.googleapis.com/css2?family=AR+One+Sans&display=swap" rel="stylesheet">
+   <link type="stylesheet" href="https://fonts.googleapis.com/css2?family=Signika:wght@400;500&display=swap">
+
+   <link rel="stylesheet" href="css/main.css">
+   <script type="module">
+      
+      // establecer que se llame al método de clase 'crear' justo después de cargar todos los 
+      // elementos de la página (evento 'onload' del 'document')
+
+      import { AplicacionPCG } from "./js/aplicacion-pcg.js"
+      document.onload = AplicacionPCG.crear( ) 
+   </script>
+</head>
+<body>
+<div id="cuerpo">
+   <div id="cabecera">
+      <h2>Progr. del cauce gráfico (PCG)</h2>
+      <img width="10%" src="imgs/ugr-ivc/UGR-MARCA-02-negativo-2048-cols-rec-derecha.png"/>
+   </div>
+   <div id="contenido">
+      <div id="contenedor_canvas_pcg">
+         <canvas id="canvas_app_pcg"></canvas>
+      </div>
+      <div id="contenedor_controles_pcg">
+         <div id="cabecera_controles">
+            <h3>Configuración</h3>
+         </div>
+      </div>
+   </div>
+   <div id="pie">
+      Aquí deben salir los mensajes del pie.
+   </div>
+
+</div> <!-- fin cuerpo-->
+</body>

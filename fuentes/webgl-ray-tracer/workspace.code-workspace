@@ -1,0 +1,29 @@
+{
+  "folders":
+  [ { "name": "RAIZ",
+      "path": "."
+    },
+    { "name": "SRC-TS",
+      "path": "src-ts"
+    }
+  ],
+
+  "settings" :
+  {
+    
+
+  },
+
+  // indicar extensiones recomendadas y extensiones que no se deben usar (y que no queremos que se recomienden)
+  "extensions": {
+    "recommendations": 
+    [ 
+      "slevesque.shader"    // soporte para archivos .glsl en GLSL
+    ],
+    "unwantedRecommendations": 
+    [
+      "ms-vscode.makefile-tools",  // no queremos que VS code gestione makefiles 
+      "ms-vscode.cmake-tools"      // tampoco los archivos 'CMakeFiles.txt'
+    ]
+  },
+}

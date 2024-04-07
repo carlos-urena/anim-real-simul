@@ -1,0 +1,268 @@
+body 
+{
+   background-color : rgb(20%,20%,20%);
+   color            : rgb(100%,85%,70%);
+   box-sizing : border-box ! important ;  /** incluir borde en tamaño de la caja de cada elemento (nunca margin) **/
+   font-family : 'AR One Sans', sans-serif ;
+   overflow : hidden ;
+}
+
+h1, h2, h3 
+{
+  color : rgb(100%,100%,100%);
+}
+
+#cuerpo
+{
+   display         : flex ;
+   flex-direction  : column ;
+   justify-content : space-between;
+   align-items     : center ; /** centra en horizontal (en el cross axis, que es el horizontal aquí) **/
+   
+   position : absolute;
+   height   : auto;
+   top      : 0px ;
+   left     : 0px ;
+   right    : 0px ;
+   bottom   : 0px ;
+   
+   margin   : 0px ;
+   padding  : 0px ;
+}
+
+#cuerpo, 
+#contenido, 
+#contenedor_canvas_pcg, #contenedor_controles_pcg, 
+#canvas_pcg 
+{
+   min-width  : 0px ;
+   min-height : 0px ;
+}
+
+#cabecera
+{
+   display          : flex ;   /** guía de flex https://css-tricks.com/snippets/css/a-guide-to-flexbox/ **/
+   align-items      : center ; /** en el cross-axis (vertical) están centrados **/ 
+   justify-content  : space-between ; 
+}
+
+#cabecera, #contenido, #pie 
+{
+   width    : 98% ;
+}
+
+#cabecera, #contenido
+{
+   padding  : 0px ;
+   border   : 0px ;
+   margin   : 0px ;
+}
+
+#contenido 
+{
+   flex-grow        : 1 ; /** en los demás del mismo padre esto es 0 (valor por defecto), así que todo el espacio (alto) se le da a este **/
+   display          : flex ;   /** guía de flex https://css-tricks.com/snippets/css/a-guide-to-flexbox/ **/
+   align-items      : stretch ; /** ocupan todo el espacio en el cross-axis (el vertical) **/ 
+   justify-content  : space-between ; 
+   border-width     : 0px ;
+}
+
+/**
+#contenedor_canvas_pcg, #contenedor_controles_pcg, #pie
+{
+   border-style  : solid ; 
+   border-width  : 2px ; 
+   border-color  : rgb(60%,60%,60%); 
+   border-radius : 3px ;  
+}
+**/
+
+
+#contenedor_canvas_pcg 
+{
+   flex-grow   : 1 ; /** ocupar todo el espacio disponible en horizontal **/
+   box-sizing  : border-box ! important ;  /** incluir borde en tamaño de la caja de cada elemento (nunca margin) **/
+   display     : flex ;
+   align-items : stretch ; 
+}
+
+#contenedor_controles_pcg 
+{
+   width          : 30% ;
+   padding        : 5px ;
+   margin-left    : 6px ;  /*** == separacion **/
+   margin-bottom  : 0px ;
+   margin-top     : 0px ;
+   margin-right   : 0px ;
+   box-sizing : border-box ! important ;  /** incluir borde en tamaño de la caja de cada elemento (nunca margin) **/
+   background-color : rgb(30%,30%,30%);
+
+   /** aspecto relacionados con el layout grid **/
+
+   display               : grid;
+   grid-template-columns : 1fr 1fr;
+   grid-auto-rows        : max-content ;
+   column-gap            : 0px ;
+   row-gap               : 4px ;
+   /** align-items           : center ; /** alineación vertical ?? **/
+}
+
+#cabecera_controles
+{
+   grid-column-start : 1 ;
+   grid-column-end   : span 2 ;
+}
+
+#pie 
+{
+   padding        : 5px ;
+   box-sizing     : border-box ! important ;  /** incluir borde en tamaño de la caja de cada elemento (nunca margin) **/
+   margin-left    : 0px ;  
+   margin-bottom  : 6px ;  /*** == separacion **/
+   margin-top     : 6px ;  /*** == separacion **/
+   margin-right   : 0px ;
+}
+
+#canvas_app_pcg 
+{  
+   width        : 100% ;
+   margin       : 0px ;
+   padding      : 0px ;
+   border-style : none ;
+   border-width : 0px ;
+}
+
+.estilo_div_grid_izq
+{
+   background-color: rgb( 20%, 20%, 20% );
+   display: flex;
+   align-items: center;
+   height : 30px ;
+   padding-left : 7px ;
+   border-top-left-radius : 2px ;
+   border-bottom-left-radius : 2px ;
+}
+
+.estilo_div_grid_der
+{
+   background-color: rgb( 20%, 20%, 20% );
+   display: flex;
+   align-items: center;
+   height : 30px ;
+   padding-right : 7px ;
+   border-top-right-radius : 2px ;
+   border-bottom-right-radius : 2px ;
+}
+
+
+/**** estilos para controles ******/
+
+/*  Quitarle recuadros que aparecen a veces rodeando los inputs y demás
+**  elementos de los formularios, ver: 
+**  https://stackoverflow.com/questions/48134951/how-to-remove-border-highlight-on-an-select-after-press-it
+*/ 
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus 
+{
+  outline : none !important;
+}
+
+.form-control:focus 
+{
+   box-shadow: none!important;
+}
+
+.estilo_input_checkbox 
+{
+   background-color: rgb(20%,20%,20%);
+  
+   appearance    : none;
+   width         : 15px ;
+   height        : 15px ;
+   border-radius : 6px;
+   border        : 1px solid  rgb(100%,85%,70%);
+   padding       : 0px !important ;
+   margin        : 0px ! important ;
+   outline       : none ;
+}
+
+.estilo_input_checkbox:checked 
+{
+   background-color : rgb(100%,85%,70%);
+}
+
+.estilo_input_color
+{
+   width            : 50px ;
+   height           : 25px ;
+   border           : solid 2px rgb(100%,85%,70%);
+   border-radius    : 6px ;
+   background-color : rgb(20%,20%,20%);
+   padding          : 3px ;
+}
+
+.estilo_input_color::-webkit-color-swatch-wrapper 
+{
+   padding       : 0;
+   border-radius : 0;
+   border-width  : 0px ;
+}
+
+.estilo_input_color::-webkit-color-swatch
+{
+   border : none;
+}
+
+/** probar en: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_rangeslider **/
+
+.estilo_input_slider    /** carril del slider **/
+{
+   -webkit-appearance: none;
+   
+   width : 50% ;
+   height: 8px; 
+   background: rgb(50%,42%,35%);
+   border-radius : 6px ;
+}
+
+.estilo_input_slider::-webkit-slider-thumb /** botoncito del slider en Webkit **/
+{  
+   -webkit-appearance: none;
+   appearance: none;
+   width: 17px;
+   height: 17px; 
+   border-radius : 8px ;
+   border-style: solid ;
+   border-width : 3px ;
+   border-color : rgb(100%,100%,100%);
+   background: rgb(70%,50%,30%);
+   
+ }
+
+
+/*  --------------------------------------------------------------------------------
+**  ver ejemplo de estillo de un select aquí: 
+**  https://www.sliderrevolution.com/resources/css-select-styles/
+**
+**  ver la primera opción:
+**  "Custom Select Field Styling with Only CSS" (pinchar para ver el CSS en el recuadro de pruebas)
+*/
+
+.estilo_select
+{
+   
+   background-color : rgb(30%,30%,30%);
+   color            : rgb(100%,85%,70%);
+   font-family      : inherit;
+   font-size        : inherit;
+   border-radius    : 6px ;
+   border           : 1px solid  rgb(100%,85%,70%);
+   padding          : 0px ;
+   margin           : 0px ;
+}
+
+
+
