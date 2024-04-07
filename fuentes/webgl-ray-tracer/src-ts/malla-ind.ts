@@ -25,7 +25,7 @@ import  { ObjetoVisualizable
         from "./objeto-visu.js"
 
 import { Textura } from  "./texturas.js"
-import { AplicacionPCG } from "./aplicacion-pcg.js"
+import { AplicacionWRT } from "./aplicacion-wrt.js"
 
 
 
@@ -97,7 +97,7 @@ export class MallaInd extends ObjetoVisualizable
     private crearInicializarVAO() : void
     {
         const nombref : string = 'MallaInd.crearVAO'
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         //Log(`${nombref} inicio, creando VAO de ${this.leerNombre}`)
 
@@ -126,7 +126,7 @@ export class MallaInd extends ObjetoVisualizable
     {
         const nombref : string = `MallaInd.crearTablaAristas (${this.leerNombre}):`
 
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         const nv : number = this.posiciones.length
 
@@ -214,8 +214,8 @@ export class MallaInd extends ObjetoVisualizable
     public visualizar(  ) : void 
     {
         const nombref : string = `MallaInd.visualizarGL (${this.leerNombre}):`
-        let gl = AplicacionPCG.instancia.gl
-        let cauce = AplicacionPCG.instancia.cauce 
+        let gl = AplicacionWRT.instancia.gl
+        let cauce = AplicacionWRT.instancia.cauce 
 
         if ( this.tieneColor )
         {
@@ -239,7 +239,7 @@ export class MallaInd extends ObjetoVisualizable
     public visualizarAristas( ) : void 
     {
         const nombref : string = `MallaInd.visualizarGL_Aristas (${this.leerNombre}):`
-        let gl = AplicacionPCG.instancia.gl 
+        let gl = AplicacionWRT.instancia.gl 
 
         if ( this.dvao_aristas == null ) 
             this.crearVAOAristas() 
@@ -254,7 +254,7 @@ export class MallaInd extends ObjetoVisualizable
     public visualizarNormales( ) : void 
     {
         const nombref : string = `MallaInd.visualizarGL_Normales (${this.leerNombre}):`
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         if ( this.dvao_normales == null ) 
             this.crearVAONormales() 

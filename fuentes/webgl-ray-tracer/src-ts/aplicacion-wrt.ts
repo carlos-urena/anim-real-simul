@@ -1,8 +1,7 @@
 import { Log, ComprErrorGL, Assert, html, Milisegundos,
          ContextoWebGL, EstadoRaton,
          Ejes, 
-         RejillaXY, TrianguloTest, TrianguloIndexadoTest, 
-         LeerArchivoTexto,
+         Cuadrado
        } from "./utilidades.js"
 import { Cauce, CrearCauce } from "./cauce.js"
 import { DescrVAO, DescrVBOAtrib, DescrVBOInd, CuadroXYColores } from "./vaos-vbos.js"
@@ -24,7 +23,7 @@ import { GrafoTest, GrafoTest2 } from "./grafo-escena.js"
 /**
  * Clase con la funcionalidad básica de una aplicación PCG
  */
-export class AplicacionPCG 
+export class AplicacionWRT 
 {
    
     // ---------------------------------------
@@ -35,7 +34,7 @@ export class AplicacionPCG
     * instancia única (singleton) de esta clase ( estática )
     * se lee con el método 'instancia' (tipo get, estático)
     */
-   private static instancia_apl_pcg : AplicacionPCG | null = null 
+   private static instancia_apl_pcg : AplicacionWRT | null = null 
 
 
    // ------------------------------
@@ -141,15 +140,15 @@ export class AplicacionPCG
    // -------------------------------------------------------------------------
    
    /**
-    * método 'get' (estático) para obtener la instancia (única) de AplicacionPCG 
+    * método 'get' (estático) para obtener la instancia (única) de AplicacionWRT 
     * (si es nula se produce un error)
     */
-   public static get instancia() : AplicacionPCG 
+   public static get instancia() : AplicacionWRT 
    {
-      if ( AplicacionPCG.instancia_apl_pcg == null )
-         throw Error("AplicacionPCG.instancia: no se puede obtener la instancia, todavía no se ha creado")
+      if ( AplicacionWRT.instancia_apl_pcg == null )
+         throw Error("AplicacionWRT.instancia: no se puede obtener la instancia, todavía no se ha creado")
 
-      return AplicacionPCG.instancia_apl_pcg
+      return AplicacionWRT.instancia_apl_pcg
    }
    // -------------------------------------------------------------------
  
@@ -157,9 +156,9 @@ export class AplicacionPCG
    /**
     * método 'get' (estático) para devolver la instancia (posiblemente 'null' si no se ha creado todavía)
     */
-   public static get instancia_o_null() : AplicacionPCG | null  
+   public static get instancia_o_null() : AplicacionWRT | null  
    {
-      return AplicacionPCG.instancia_apl_pcg
+      return AplicacionWRT.instancia_apl_pcg
    } 
    // -------------------------------------------------------------------
 
@@ -168,13 +167,13 @@ export class AplicacionPCG
     */
    public static anularInstancia() : void 
    {
-      let inst = AplicacionPCG.instancia_apl_pcg 
+      let inst = AplicacionWRT.instancia_apl_pcg 
 
       if ( inst != null )
       {
          console.log("Destruyendo la instancia.")
          inst.desactivarFGEs()
-         AplicacionPCG.instancia_apl_pcg = null 
+         AplicacionWRT.instancia_apl_pcg = null 
       }
       else 
          console.log("La instancia ya estaba destruida.")
@@ -183,7 +182,7 @@ export class AplicacionPCG
    // -------------------------------------------------------------------
 
    /**
-    * Constructor de AplicacionPCG 
+    * Constructor de AplicacionWRT 
     * 
     *   * Registra la instancia como la instancia única (una sola vez)
     *   * Inicializa las variables de instancia que no dependan del Cauce y que 
@@ -191,15 +190,15 @@ export class AplicacionPCG
     */
    constructor(  )
    {
-      const nombref : string = "AplicacionPCG.constructor:" 
+      const nombref : string = "AplicacionWRT.constructor:" 
 
-      // Registrar esta instancia como la instancia única (singleton) de la clase AplicacionPCG
+      // Registrar esta instancia como la instancia única (singleton) de la clase AplicacionWRT
       // (comprobando antes que no estaba ya creada)
       
-      if ( AplicacionPCG.instancia_apl_pcg != null )
-         throw Error(`${nombref} intento de crear más de una instancia de la clase 'AplicacionPCG'`)
+      if ( AplicacionWRT.instancia_apl_pcg != null )
+         throw Error(`${nombref} intento de crear más de una instancia de la clase 'AplicacionWRT'`)
       
-      AplicacionPCG.instancia_apl_pcg = this 
+      AplicacionWRT.instancia_apl_pcg = this 
 
       // Recuperar los elementos HTML que debe haber en la página y que esta aplicación usa.
 
@@ -222,6 +221,7 @@ export class AplicacionPCG
 
       // Añadir los objetos que se pueden generar sin descargar nada del servidor.
 
+      this.objetos.push( new Cuadrado() )
       this.objetos.push( new Cubo24(  ) )
       this.objetos.push( new MallaCuadradoXY( 32, 32 ) )
       this.objetos.push( new MallaToroide( 32, 32 ) )
@@ -260,9 +260,9 @@ export class AplicacionPCG
     */
    public async inicializar() : Promise<void>
    {
-      const nombref : string = "AplicacionPCG.inicializar:" 
+      const nombref : string = "AplicacionWRT.inicializar:" 
 
-      Assert( AplicacionPCG.instancia == this, "Esto no puede saltar...")
+      Assert( AplicacionWRT.instancia == this, "Esto no puede saltar...")
 
       //og(`${nombref} inicio`)
       
@@ -333,7 +333,7 @@ export class AplicacionPCG
    public get cauce() : Cauce 
    {
       if ( this.cauce_actual == null )
-         throw Error(`AplicacionPCG.cauce: se ha intentado leer el cauce actual, pero es nulo`)
+         throw Error(`AplicacionWRT.cauce: se ha intentado leer el cauce actual, pero es nulo`)
       return this.cauce_actual 
    }
    // ------------------------------------------------------------------------
@@ -344,7 +344,7 @@ export class AplicacionPCG
    public get gl() : ContextoWebGL 
    {
       if ( this.gl_act == null )
-         throw Error(`AplicacionPCG.gl: se ha intentado leer el contexto actual, pero es nulo`)
+         throw Error(`AplicacionWRT.gl: se ha intentado leer el contexto actual, pero es nulo`)
       return this.gl_act 
    }
    // ------------------------------------------------------------------------- 
@@ -362,7 +362,7 @@ export class AplicacionPCG
     */
    private crearCheckboxAristas()
    {
-      const nombref : string = 'AplicacionPCG.crearBotonAristas'
+      const nombref : string = 'AplicacionWRT.crearBotonAristas'
 
       this.input_boton_aristas = CrearInputCheckbox( this.controles, this.visualizar_aristas,
                                        'id_boton_aristas', 'Visu.&nbsp;aristas' )
@@ -375,7 +375,7 @@ export class AplicacionPCG
     */
    private crearCheckboxNormales()
    {
-      const nombref : string = 'AplicacionPCG.crearCheckboxNormales'
+      const nombref : string = 'AplicacionWRT.crearCheckboxNormales'
 
       this.input_boton_normales = CrearInputCheckbox( this.controles, this.visualizar_normales,
                                        'id_boton_normales', 'Visu.&nbsp;normales' )
@@ -388,7 +388,7 @@ export class AplicacionPCG
     */
    private crearCheckboxIluminacion()
    {
-      const nombref : string = 'AplicacionPCG.crearCheckboxIluminacion'
+      const nombref : string = 'AplicacionWRT.crearCheckboxIluminacion'
 
       this.input_boton_iluminacion = CrearInputCheckbox( this.controles, this.iluminacion,
                                        'id_boton_iluminacion', 'Iluminación' )
@@ -401,7 +401,7 @@ export class AplicacionPCG
     */
    private crearSelectorObjetoActual() : void
    {
-      const nombref : string = 'AplicacionPCG.crearSelectorObjetoActual'
+      const nombref : string = 'AplicacionWRT.crearSelectorObjetoActual'
       Assert( 0 < this.objetos.length, `${nombref} : no hay objetos en la lista de objetos`)
 
       let nombres : string[] = []
@@ -434,7 +434,7 @@ export class AplicacionPCG
     */
    private fijarParamS( nuevo_param_s : String ) : void
    {
-      const nombref : string = 'AplicacionPCG.fijarParamS:'
+      const nombref : string = 'AplicacionWRT.fijarParamS:'
       this.param_S = parseFloat( this.input_param_S!.value )
       let msg = `Nuevo valor del parámetro S == ${this.param_S}`
       this.estado = msg
@@ -461,7 +461,7 @@ export class AplicacionPCG
     */
    private crearElementosControles()
    {
-      const nombref : string = 'AplicacionPCG.crearElementosControles:'
+      const nombref : string = 'AplicacionWRT.crearElementosControles:'
 
       this.crearCheckboxAristas()
       this.crearCheckboxNormales()
@@ -496,7 +496,7 @@ export class AplicacionPCG
     */ 
    public redimensionarVisualizar() : void 
    {
-      const nombref : string = "AplicacionPCG.redimensionarVisualizar:"
+      const nombref : string = "AplicacionWRT.redimensionarVisualizar:"
       if ( this.canvas == null )
       {
          Log(`${nombref} no hay canvas, salgo`)
@@ -517,7 +517,7 @@ export class AplicacionPCG
     */
    obtenerElementoContenedor( id_contenedor : string ) : HTMLDivElement
    {
-      const nombref : string = "AplicacionPCG.obtenerElementoContenedor:" 
+      const nombref : string = "AplicacionWRT.obtenerElementoContenedor:" 
 
       let contenedor : HTMLElement | null = document.getElementById( id_contenedor )
       if ( contenedor == null )
@@ -537,7 +537,7 @@ export class AplicacionPCG
     */
    obtenerElementoControles( id_controles : string  ) : HTMLDivElement
    {
-      const nombref : string = "AplicacionPCG.obtenerElementoContenedor:" 
+      const nombref : string = "AplicacionWRT.obtenerElementoContenedor:" 
 
       let controles : HTMLElement | null = document.getElementById( id_controles )
       if ( controles == null )
@@ -558,7 +558,7 @@ export class AplicacionPCG
     */
    obtenerCrearElementoCanvas( contenedor : HTMLDivElement ) : HTMLCanvasElement 
    {
-      const nombref : string = "AplicacionPCG.obtenerCrearElementoCanvas:" 
+      const nombref : string = "AplicacionWRT.obtenerCrearElementoCanvas:" 
 
       let canvas : HTMLCanvasElement | null = null 
       let lista  : NodeListOf<HTMLCanvasElement> = contenedor.querySelectorAll("canvas")
@@ -589,7 +589,7 @@ export class AplicacionPCG
     */
    obtenerContextoWebGL( canvas : HTMLCanvasElement ) : WebGL2RenderingContext | WebGLRenderingContext
    {
-      const nombref : string = "AplicacionPCG.obtenerContextoWebGL:" 
+      const nombref : string = "AplicacionWRT.obtenerContextoWebGL:" 
 
       let gl : RenderingContext | null = this.canvas.getContext( "webgl2" )
       if ( gl == null )
@@ -614,7 +614,7 @@ export class AplicacionPCG
     */
    visualizarFrame() : void 
    {
-      const nombref : string = 'AplicacionPCG.visualizarFrame:' 
+      const nombref : string = 'AplicacionWRT.visualizarFrame:' 
       let gl    = this.gl_act 
       let cauce = this.cauce_actual 
 
@@ -699,7 +699,7 @@ export class AplicacionPCG
     */
    fgeMenuContexto( me : MouseEvent ) : Boolean
    {
-      const nombref = 'AplicacionPCG.fgeMenuContexto'
+      const nombref = 'AplicacionWRT.fgeMenuContexto'
       me.stopImmediatePropagation()
       me.preventDefault()
 
@@ -717,7 +717,7 @@ export class AplicacionPCG
     */
    fgeRatonBotonPulsar( e : MouseEvent ) : Boolean
    {
-      const nombref = 'AplicacionPCG.mgeRatonBotonPulsar'
+      const nombref = 'AplicacionWRT.mgeRatonBotonPulsar'
       e.stopImmediatePropagation()
       e.preventDefault()
 
@@ -739,7 +739,7 @@ export class AplicacionPCG
     */
    siguienteObjeto() : void 
    {
-      const nombref = 'AplicacionPCG.siguienteObjeto'
+      const nombref = 'AplicacionWRT.siguienteObjeto'
       this.fijarObjetoActual( ( this.indice_objeto_actual +1 ) % this.objetos.length )
    }
    // -----------------------------------------------------------------------------------
@@ -751,7 +751,7 @@ export class AplicacionPCG
     */
    fijarObjetoActual( indice_obj : number ) : void
    {
-      const nombref = 'AplicacionPCG.fijarObjetoActivo:'
+      const nombref = 'AplicacionWRT.fijarObjetoActivo:'
       Assert( 0 <= indice_obj && indice_obj < this.objetos.length, `${nombref} índice (${indice_obj}) fuera de rango (0 - ${this.objetos.length-1})` )
 
       this.indice_objeto_actual = indice_obj
@@ -771,7 +771,7 @@ export class AplicacionPCG
     */
    fijarColorDefecto( nuevo_color_inicial : Vec3 ) : void
    {
-      const nombref = 'AplicacionPCG.fijarColorDefecto:'
+      const nombref = 'AplicacionWRT.fijarColorDefecto:'
       
       this.color_defecto = nuevo_color_inicial
       const msg : string = `Color por defecto fijado a ${this.color_defecto.toStringPercent()}`
@@ -790,7 +790,7 @@ export class AplicacionPCG
     */
    fijarVisualizarAristas( nuevo_visualizar_aristas : boolean  ) : void 
    {
-      const nombref = 'AplicacionPCG.fijarVisualizarAristas'
+      const nombref = 'AplicacionWRT.fijarVisualizarAristas'
       this.visualizar_aristas = nuevo_visualizar_aristas 
 
       if ( this.input_boton_aristas != null )
@@ -808,7 +808,7 @@ export class AplicacionPCG
     */
    fijarVisualizarNormales( nuevo_visualizar_normales : boolean  ) : void 
    {
-      const nombref = 'AplicacionPCG.fijarVisualizarNormales'
+      const nombref = 'AplicacionWRT.fijarVisualizarNormales'
       this.visualizar_normales = nuevo_visualizar_normales 
 
       if ( this.input_boton_normales != null )
@@ -827,7 +827,7 @@ export class AplicacionPCG
     */
    fijarIluminacion( nuevo_iluminacion : boolean  ) : void 
    {
-      const nombref = 'AplicacionPCG.fijarIluminacion'
+      const nombref = 'AplicacionWRT.fijarIluminacion'
       this.iluminacion = nuevo_iluminacion
 
       if ( this.input_boton_iluminacion != null )
@@ -846,7 +846,7 @@ export class AplicacionPCG
     */
    fgeTecladoLevantarBoton(  e : KeyboardEvent ) : boolean
    {
-      const nombref = 'AplicacionPCG.fgeLevantarBoton'
+      const nombref = 'AplicacionWRT.fgeLevantarBoton'
       e.stopImmediatePropagation()
       e.preventDefault()
       
@@ -880,7 +880,7 @@ export class AplicacionPCG
     */
    fgeRatonArrastre( e : MouseEvent ) : Boolean 
    {
-      const nombref = 'AplicacionPCG.fgeRatonArrastre'
+      const nombref = 'AplicacionWRT.fgeRatonArrastre'
       e.stopImmediatePropagation()
       e.preventDefault()
 
@@ -903,7 +903,7 @@ export class AplicacionPCG
     */
    fgeRatonBotonLevantar( e : MouseEvent ) : Boolean 
    {
-      const nombref = 'AplicacionPCG.botonRatonLevantar'
+      const nombref = 'AplicacionWRT.botonRatonLevantar'
       e.stopImmediatePropagation()
       e.preventDefault()
       
@@ -925,7 +925,7 @@ export class AplicacionPCG
     */
    fgeRatonRueda( e : WheelEvent ) : Boolean 
    {
-      const nombref = 'AplicacionPCG.botonRatonArriba'
+      const nombref = 'AplicacionWRT.botonRatonArriba'
       e.stopImmediatePropagation()
       e.preventDefault()
       
@@ -944,11 +944,11 @@ export class AplicacionPCG
     */
    public static async crear(  ) : Promise<void> 
    {
-      const nombref = "AplicacionPCG.crear:" // getFuncName()
+      const nombref = "AplicacionWRT.crear:" // getFuncName()
 
       // fijar el gestor de errores, debe 
-      window.onerror = (err) => AplicacionPCG.gestionarError( err )
-      window.onunhandledrejection = (err) => AplicacionPCG.gestionarError( err ) 
+      window.onerror = (err) => AplicacionWRT.gestionarError( err )
+      window.onunhandledrejection = (err) => AplicacionWRT.gestionarError( err ) 
 
       console.log( `${nombref} inicio.`)
       
@@ -960,19 +960,19 @@ export class AplicacionPCG
       // dar tiempo a que se actualize el DOM con los cambios introducidos
       //await Milisegundos( 500 )  
 
-      let instancia_apl : AplicacionPCG | null = null 
+      let instancia_apl : AplicacionWRT | null = null 
       try 
       {
          // crear e inicializar la instancia única 
-         instancia_apl = new AplicacionPCG(  )
+         instancia_apl = new AplicacionWRT(  )
          await instancia_apl.inicializar()
       }
       catch( err : any )
       {
-         AplicacionPCG.gestionarError( err )
+         AplicacionWRT.gestionarError( err )
       }
 
-      if ( AplicacionPCG.instancia_o_null == null )
+      if ( AplicacionWRT.instancia_o_null == null )
          console.log(`${nombref} no se ha creado la aplicación`)
       else 
          console.log(`${nombref} la aplicación se ha creado sin errores`)
@@ -997,7 +997,7 @@ export class AplicacionPCG
     */
    public static gestionarError( err : any ) : void 
    {
-      const nombref = "ErrorAplicacionPCG:"
+      const nombref = "ErrorAplicacionWRT:"
 
       let descripcion : string = "(no hay más información del error)"
 
@@ -1018,13 +1018,13 @@ export class AplicacionPCG
       console.log(`${nombref} ha ocurrido un error. La aplicación se desactivará.`)
       console.log(`${nombref} ${descripcion}`)
 
-      let instancia = AplicacionPCG.instancia_o_null 
+      let instancia = AplicacionWRT.instancia_o_null 
       
       // eliminar la instancia si todavía existe
       if ( instancia != null )
       { 
          instancia.desactivarFGEs() // desactiva las FGEs, restaura valores anteriores (ver la función)
-         AplicacionPCG.anularInstancia() // desconecta la aplicación para que no se vuelva a usar
+         AplicacionWRT.anularInstancia() // desconecta la aplicación para que no se vuelva a usar
       }
 
       // desactivar gestores de eventos de error (se activaron al inicializar)

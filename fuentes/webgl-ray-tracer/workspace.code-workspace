@@ -5,6 +5,9 @@
     },
     { "name": "SRC-TS",
       "path": "src-ts"
+    },
+    { "name": "SRC-GLSL",
+      "path": "public_html/glsl"
     }
   ],
 

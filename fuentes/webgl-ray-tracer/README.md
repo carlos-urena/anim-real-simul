@@ -1,6 +1,6 @@
-# PCG: Instalación, compilación y ejecución de la aplicación Web
+# ARS: Trazador de Rayos sencillo en un fragment shader
 
-Prerequisitos e instrucciones de compilación y ejecución para la aplicación Web
+Prerequisitos e instrucciones de compilación y ejecución para la aplicación Web con el trazador de rayos sencillo.
 
 ## Prerequisitos: 
 

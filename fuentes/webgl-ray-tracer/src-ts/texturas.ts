@@ -2,7 +2,7 @@
 import { Log, Assert, esPotenciaDe2, ComprErrorGL,
          LeerArchivoImagen } from "./utilidades.js" 
 import { Cauce } from "./cauce.js"
-import { AplicacionPCG } from "./aplicacion-pcg.js"
+import { AplicacionWRT } from "./aplicacion-wrt.js"
 
 
 
@@ -54,7 +54,7 @@ export class Textura
       Assert( this.texture == null, `${nombref} no se puede crear la textura dos veces`)
 
       let img : HTMLImageElement = this.elemento_img
-      let gl = AplicacionPCG.instancia.gl
+      let gl = AplicacionWRT.instancia.gl
 
       ComprErrorGL( gl, `${nombref} al inicio`)
 
@@ -99,8 +99,8 @@ export class Textura
    activar(  ) : void
    {
       const nombref : string = 'Textura.activar:'
-      let gl = AplicacionPCG.instancia.gl
-      let cauce : Cauce = AplicacionPCG.instancia.cauce 
+      let gl = AplicacionWRT.instancia.gl
+      let cauce : Cauce = AplicacionWRT.instancia.cauce 
 
       ComprErrorGL( gl, `${nombref} al inicio` )
 
@@ -117,7 +117,7 @@ export class Textura
 
    public static desactivar(  ) : void  
    {
-      let cauce : Cauce = AplicacionPCG.instancia.cauce 
+      let cauce : Cauce = AplicacionWRT.instancia.cauce 
       Textura.actual = null 
       cauce.fijarEvalText( false, null )
    }

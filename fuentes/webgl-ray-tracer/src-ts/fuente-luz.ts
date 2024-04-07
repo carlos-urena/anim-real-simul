@@ -1,6 +1,6 @@
 import { Assert, Log } from "./utilidades.js"
 import { Vec3, Vec4 } from "./vec-mat.js"
-import { AplicacionPCG } from "./aplicacion-pcg.js"
+import { AplicacionWRT } from "./aplicacion-wrt.js"
 import { Cauce } from "./cauce.js"
 
 
@@ -62,13 +62,13 @@ export class ColeccionFuentesLuz extends Array<FuenteLuz>
             color.push( fuente.color )
         }
 
-        let cauce : Cauce = AplicacionPCG.instancia.cauce
+        let cauce : Cauce = AplicacionWRT.instancia.cauce
         cauce.fijarEvalMIL( true )
         cauce.fijarFuentesLuz( color, pos_dir_wc )
     }
     public desactivar()
     {
-        let cauce : Cauce = AplicacionPCG.instancia.cauce
+        let cauce : Cauce = AplicacionWRT.instancia.cauce
         cauce.fijarEvalMIL( false )
     }
 }

@@ -1,7 +1,7 @@
 import { Assert } from "./utilidades.js"
 import { Vec2, Vec3, UVec3 } from "./vec-mat.js"
 import { MallaInd } from "./malla-ind.js"
-import { AplicacionPCG } from "./aplicacion-pcg.js"
+import { AplicacionWRT } from "./aplicacion-wrt.js"
 
 /**
  * Función de parametrización para una superficie paramétrica en 3D

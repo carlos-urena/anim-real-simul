@@ -3,7 +3,7 @@ import { Vec2, Vec3, Vec4, UVec3 } from "./vec-mat.js"
 import { DescrVAO, DescrVBOAtrib, DescrVBOInd } from "./vaos-vbos.js"
 import { Cauce } from "./cauce.js"
 import { ObjetoVisualizable } from "./objeto-visu.js"
-import { AplicacionPCG } from "./aplicacion-pcg.js"
+import { AplicacionWRT } from "./aplicacion-wrt.js"
 
 // -----------------------------------------------------------------------------
 
@@ -248,6 +248,61 @@ export class Ejes extends DescrVAO
 }
 // -----------------------------------------------------------------------------
 
+
+export class VAOCuadrado extends DescrVAO 
+{
+
+   constructor(  )
+   {
+      
+      const numero_atributos_vao : number = 1
+      
+      super
+      ({ 
+         posiciones :
+         [ 
+            -1.0, -1.0,  0.0, 
+            +1.0, -1.0,  0.0, 
+            +1.0, +1.0,  0.0, 
+            -1.0, +1.0,  0.0
+         ],
+         indices: 
+         [
+            0,1,2, 0,2,3
+         ]
+      })
+
+      this.nombre = 'Cuadrado'
+   }
+
+}
+
+
+export class Cuadrado extends ObjetoVisualizable
+{
+   protected dvao : DescrVAO | null = null
+
+   /**
+     * Crea e inicializar el VAO (si no lo estaba) y visualizar la malla
+     */
+   public visualizar(  ) : void 
+   {
+       const nombref : string = `MallaInd.visualizarGL (${this.leerNombre}):`
+       let gl = AplicacionWRT.instancia.gl
+       let cauce = AplicacionWRT.instancia.cauce 
+
+       
+       if ( this.dvao == null ) 
+           this.dvao = new VAOCuadrado() 
+
+       this.dvao!.draw( gl.TRIANGLES )
+
+       
+   }
+}
+
+// -----------------------------------------------------------------------------
+
 /**
  * Una rejilla de lineas, en el plano Z=0, entre 0 y 1
  */
@@ -259,7 +314,7 @@ export class RejillaXY extends ObjetoVisualizable
    constructor(  )
    {
       super()
-      let gl = AplicacionPCG.instancia.gl
+      let gl = AplicacionWRT.instancia.gl
       this.fijarNombre = "RejillaXY"
 
       const nx : number = 8, ny : number = 8
@@ -280,7 +335,7 @@ export class RejillaXY extends ObjetoVisualizable
 
    public visualizar( ): void 
    {
-      let gl = AplicacionPCG.instancia.gl 
+      let gl = AplicacionWRT.instancia.gl 
       this.dvao.draw( gl.LINES )   
    }
 
@@ -332,7 +387,7 @@ export class TrianguloTest extends ObjetoVisualizable
 
    public visualizar( ): void 
    {
-      let gl = AplicacionPCG.instancia.gl 
+      let gl = AplicacionWRT.instancia.gl 
       this.dvao.draw( gl.TRIANGLES )   
    }
 
@@ -351,7 +406,7 @@ export class TrianguloIndexadoTest extends ObjetoVisualizable
    constructor(  )
    {
       super()
-      let gl = AplicacionPCG.instancia.gl
+      let gl = AplicacionWRT.instancia.gl
       this.fijarNombre = "Triángulo ind."
 
       const num_atribs : number = 3
@@ -384,7 +439,7 @@ export class TrianguloIndexadoTest extends ObjetoVisualizable
 
    public visualizar( ): void 
    {
-      let gl = AplicacionPCG.instancia.gl
+      let gl = AplicacionWRT.instancia.gl
       this.dvao.draw( gl.TRIANGLES )   
    }
 

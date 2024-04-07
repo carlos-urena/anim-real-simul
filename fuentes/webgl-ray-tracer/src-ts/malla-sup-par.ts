@@ -1,7 +1,7 @@
 import { Assert } from "./utilidades.js"
 import { Vec2, Vec3, UVec3 } from "./vec-mat.js"
 import { MallaInd } from "./malla-ind.js"
-import { AplicacionPCG } from "./aplicacion-pcg.js"
+import { AplicacionWRT } from "./aplicacion-wrt.js"
 import { FuncionParam, FPCuadradoXY, FPEsfera, FPCilindro, FPCono, FPColumna, FPToroide } from "./sup-par.js"
 
 
@@ -17,7 +17,7 @@ export class MallaSupPar extends MallaInd
       Assert( 1 < nt && 1 < ns )
       super(  )
 
-      let gl = AplicacionPCG.instancia.gl
+      let gl = AplicacionWRT.instancia.gl
       
       this.fijarNombre = `Superf. ${fp.nombre}`
       this.fp = fp 

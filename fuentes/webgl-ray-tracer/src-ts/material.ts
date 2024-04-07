@@ -1,5 +1,5 @@
 import { Assert, Log } from "./utilidades.js"
-import { AplicacionPCG } from "./aplicacion-pcg.js"
+import { AplicacionWRT } from "./aplicacion-wrt.js"
 
 export class Material
 {
@@ -53,7 +53,7 @@ export class Material
    public activar(  ) : void
    {
       Material.actual = this // registrar el material actual
-      let cauce = AplicacionPCG.instancia.cauce
+      let cauce = AplicacionWRT.instancia.cauce
       cauce.fijarParamsMIL( this.k_amb, this.k_dif, this.k_pse, this.exp_pse )
    }
    // --------------------------------------------------------------------

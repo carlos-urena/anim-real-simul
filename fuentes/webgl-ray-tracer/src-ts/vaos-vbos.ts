@@ -7,7 +7,7 @@ import
 import { Cauce } from "./cauce.js"
 
 import { ObjetoVisualizable } from "./objeto-visu.js"
-import { AplicacionPCG } from "./aplicacion-pcg.js"
+import { AplicacionWRT } from "./aplicacion-wrt.js"
 import { Vec2, Vec3, UVec3 } from "./vec-mat.js"
 import { TablaFloatV3, TablaFloatV2, TablaUnsigned } from "./utilidades.js"
 
@@ -100,7 +100,7 @@ export class DescrVBOAtrib
     crearVBO(  ) : void
     {
         const nombref : string = 'DescrVBOAtribs.crearVBO'
-        let gl = AplicacionPCG.instancia.gl 
+        let gl = AplicacionWRT.instancia.gl 
         
         ComprErrorGL( gl, `${nombref}: hay un error de OpenGL a la entrada`)
         
@@ -152,7 +152,7 @@ export class DescrVBOInd
         const nombref = ` DescrVBOInd.constructor(): `
         
          Assert( 0 < indices.length , `${nombref} 'indices' is an empty array` )
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         this.count = indices.length
 
@@ -201,7 +201,7 @@ export class DescrVBOInd
     crearVBO( )
     {
         const nombref = `DescrVBOInd.crearVBO: `
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         ComprErrorGL( gl, `${nombref} error de OpenGL al inicio` )
 
@@ -276,7 +276,7 @@ export class DescrVAO
     constructor( tablas : TablasAtributos )
     {
         const nombref  = 'DescrVAO.constructor:'
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
         
         this.num_atribs = Cauce.numero_atributos
 
@@ -406,7 +406,7 @@ export class DescrVAO
     private crearArray() : void
     {
         const nombref : string = `DescrVAO.crearArray`
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         if ( this.ext_vao == null && gl instanceof WebGL2RenderingContext )
         {  
@@ -431,7 +431,7 @@ export class DescrVAO
     {
         const nombref : string = `DescrVAO.activarVertexArray`
 
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         if ( gl == null ) 
             throw Error( `${nombref} 'gl' es nulo`)
@@ -453,7 +453,7 @@ export class DescrVAO
     {
         const nombref : string = `DescrVAO.desactivarVAO`
 
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         if ( this.array == null )
             throw Error( `${nombref} 'array' es nulo`)
@@ -472,7 +472,7 @@ export class DescrVAO
     private crearVAO() : void 
     {
         const nombref : string = 'DescrVAO.crearVAO'
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         if ( this.dvbo_atributo[0] == null ) 
             throw Error("nunca pasa!")
@@ -517,7 +517,7 @@ export class DescrVAO
         Assert( index < this.num_atribs, `${nombref} índice fuera de rango` )
         Assert( this.dvbo_atributo[index] != null, `${nombref} no se puede habilitar/deshab. un atributo sin tabla` ) 
 
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         // registrar el nuevo valor del flag
         this.atrib_habilitado[index] = habilitar
@@ -545,7 +545,7 @@ export class DescrVAO
     public draw( mode : number ) : void 
     {
         const nombref : string = 'DescrVAO.draw:'
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         ComprErrorGL( gl, `${nombref} al inicio (vao==${this.nombre})`)
         
@@ -583,7 +583,7 @@ export class CuadroXYColores extends ObjetoVisualizable
     constructor(  )
     {
         super()
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
 
         this.fijarNombre = "Cuadro colores"
 
@@ -620,7 +620,7 @@ export class CuadroXYColores extends ObjetoVisualizable
 
     public visualizar( ): void 
     {
-        let gl = AplicacionPCG.instancia.gl
+        let gl = AplicacionWRT.instancia.gl
         this.dvao.draw( gl.TRIANGLES )
     }
 }

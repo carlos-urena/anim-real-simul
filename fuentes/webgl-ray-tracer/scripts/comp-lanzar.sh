@@ -1,9 +1,13 @@
 #/bin/bash -f   
 
-
+dir_src_ts="../src-ts"
+dir_js="../public_html/js"
+opciones="-strict -noEmitOnError -target ES2022 --outDir ${dir_js}"
+archs_ts=$(ls -1 ${dir_src_ts}/*.ts)
+ 
 
 ## compilar y obtener resultado en 'res'
-make 
+tsc $opciones $archs_ts
 res=$?
 echo "Resultado == " $res
 
