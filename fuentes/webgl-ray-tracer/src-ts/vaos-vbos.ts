@@ -307,14 +307,6 @@ export class DescrVAO
         if ( tablas.indices !== undefined )
             this.agregar_tabla_ind( tablas.indices )
 
-        // si hay tabla de colores, crear y añadir el correspondiente VBO
-        if ( tablas.colores !== undefined )
-            this.agregar_tabla_atrib_v3( Cauce.indice_atributo.color, tablas.colores )
-
-        // si hay tabla de normales, crear y añadir el correspondiente VBO
-        if ( tablas.normales !== undefined )
-            this.agregar_tabla_atrib_v3( Cauce.indice_atributo.normal, tablas.normales )
-
         // si hay tabla de coordenadas de textura, crear y añadir el correspondiente VBO
         if ( tablas.coords_text !== undefined )
             this.agregar_tabla_atrib_v2( Cauce.indice_atributo.coords_text, tablas.coords_text )
@@ -567,64 +559,6 @@ export class DescrVAO
         
     }
 }
-
-
-
-// -------------------------------------------------------------------------------------------------
-/**
- * A simple indexed vertex sequence (with colors)
- */
-
-export class CuadroXYColores extends ObjetoVisualizable
-{
-    private dvao : DescrVAO 
-    //private gl   : WebGL2RenderingContext | WebGLRenderingContext
-
-    constructor(  )
-    {
-        super()
-        let gl = AplicacionWRT.instancia.gl
-
-        this.fijarNombre = "Cuadro colores"
-
-        this.dvao = new DescrVAO
-        ({ 
-            posiciones:
-            [
-                -0.9, -0.9, 0.0, 
-                +0.9, -0.9, 0.0,
-                -0.9, +0.9, 0.0,
-                +0.9, +0.9, 0.0
-            ],
-            colores:
-            [
-                1.0,  0.0, 0.0, 
-                0.0,  1.0, 0.0, 
-                0.0,  0.0, 1.0, 
-                1.0,  1.0, 1.0
-            ],
-            normales: 
-            [
-                0.0,  0.0, 1.0, 
-                0.0,  0.0, 1.0, 
-                0.0,  0.0, 1.0, 
-                0.0,  0.0, 1.0
-            ],
-            indices: 
-            [   
-                0,1,3, 
-                0,3,2 
-            ]
-        })
-    }
-
-    public visualizar( ): void 
-    {
-        let gl = AplicacionWRT.instancia.gl
-        this.dvao.draw( gl.TRIANGLES )
-    }
-}
-// -------------------------------------------------------------------------------------------------
 
 
 

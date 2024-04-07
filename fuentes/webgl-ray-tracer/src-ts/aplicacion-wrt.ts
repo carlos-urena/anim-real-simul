@@ -4,19 +4,11 @@ import { Log, ComprErrorGL, Assert, html, Milisegundos,
          Cuadrado
        } from "./utilidades.js"
 import { Cauce, CrearCauce } from "./cauce.js"
-import { DescrVAO, DescrVBOAtrib, DescrVBOInd, CuadroXYColores } from "./vaos-vbos.js"
 import { ObjetoVisualizable } from "./objeto-visu.js"
 import { CamaraOrbital, Viewport } from "./camaras.js"
 import { Vec3, Vec4, Mat4, CMat4, Vec3DesdeColorHex } from "./vec-mat.js"
-import { MallaInd, Cubo24, CuadradoXYTextura } from "./malla-ind.js"
 import { Textura } from "./texturas.js"
-import { MallaPLY } from "./malla-ply.js"
 import { CrearInputCheckbox, CrearSelector, CrearInputColor, CrearInputSlider } from "./controles.js"
-import { FuenteLuz, ColeccionFuentesLuz } from "./fuente-luz.js"
-import { MallaEsfera, MallaCilindro, MallaCono, MallaColumna, MallaCuadradoXY, MallaToroide } from "./malla-sup-par.js"
-import { Material } from "./material.js"
-import { GrafoTest, GrafoTest2 } from "./grafo-escena.js"
-
 
 // -------------------------------------------------------------------
 
@@ -72,18 +64,15 @@ export class AplicacionWRT
    // estado del ratón 
    private estado_raton : EstadoRaton = new EstadoRaton
 
-   // cámara en uso
-   private camara : CamaraOrbital 
-
-   // ejes 
-   private ejes : Ejes 
-
+   
+   
    // elemento HTML (div) en el pie de la página, donde se visualizan los mensajes de estado 
    // (null al principio o si no se encuentra)
    private pie : HTMLElement | null = null 
 
-   // colección de objetos cargados
-   private objetos : ObjetoVisualizable[] = []
+   
+   // cuadrado que dibujamos para lanzar el FS de ray-tracing
+   private cuadrado : Cuadrado 
 
    // objeto que actualmente se está visualizando 
    private indice_objeto_actual : number = 0 
@@ -100,9 +89,6 @@ export class AplicacionWRT
    // elemento HTML de tipo 'input' (checkbox) para el botón de visualizar normales
    private input_boton_normales : HTMLInputElement | null = null
 
-   // elemento HTML de tipo 'select' para el selector de objeto actual
-   private selector_objeto_actual : HTMLSelectElement | null = null
-
    // elemento HTML de tipo 'input' para el slider del parámetro S
    private input_param_S : HTMLInputElement | null = null
 
@@ -115,13 +101,7 @@ export class AplicacionWRT
    // elemento HTML de tipo 'input' (color) para el color inicial al visualizar un frame
    private input_color_defecto : HTMLInputElement | null = null 
 
-   // colección de fuentes de luz 
-   private col_fuentes : ColeccionFuentesLuz = new ColeccionFuentesLuz
-   ([ 
-      new FuenteLuz( new Vec4([  1.0,  1.3, -0.2, 0.0 ]), new Vec3([ 1.0, 1.0, 1.0 ]) ),  
-      new FuenteLuz( new Vec4([ -0.2,  0.0,  1.0, 0.0 ]), new Vec3([ 0.4, 0.2, 0.2 ]) )
-   ])
- 
+  
    // índice de la fuente de luz actual
    private ind_fuente : number = 0
 
@@ -131,11 +111,13 @@ export class AplicacionWRT
    // indica si la iluminación está activada o no 
    private iluminacion : boolean = true
 
-   // Material por defecto:
-   private material_defecto : Material = new Material( 0.1, 0.5, 0.7, 20.0 )
+  
 
    // estructura con algunos objetos de test
    //private objs_test : ObjsTest
+
+    // cámara en uso
+    private camara : CamaraOrbital 
    
    // -------------------------------------------------------------------------
    
@@ -213,24 +195,13 @@ export class AplicacionWRT
       
       this.gl_act = this.obtenerContextoWebGL( this.canvas ) 
 
-      
       // Crea la cámara 3D y el objeto para visualizar los ejes
 
       this.camara = new CamaraOrbital("cámara orbital")
-      this.ejes   = new Ejes( )
+      //this.ejes   = new Ejes( )
 
-      // Añadir los objetos que se pueden generar sin descargar nada del servidor.
+      this.cuadrado = new Cuadrado()
 
-      this.objetos.push( new Cuadrado() )
-      this.objetos.push( new Cubo24(  ) )
-      this.objetos.push( new MallaCuadradoXY( 32, 32 ) )
-      this.objetos.push( new MallaToroide( 32, 32 ) )
-      this.objetos.push( new MallaEsfera( 32, 32 ) )
-      this.objetos.push( new MallaCilindro( 32, 32 ) )
-      this.objetos.push( new MallaCono( 32, 32 ) )
-      this.objetos.push( new MallaColumna( 256, 256 ) )
-     
-      
 
    }
    // -------------------------------------------------------------------------
@@ -272,18 +243,6 @@ export class AplicacionWRT
       // definir funciones gestoras de eventos 
       this.activarFGEs()
 
-      // añadir objetos que no se pueden crear en el constructor 
-      // (cargan PLYS o Texturas)
-
-      this.objetos.push( new GrafoTest( await Textura.crear("/imgs/bazinga.jpg" ) ) )
-      this.objetos.push( new GrafoTest2( await Textura.crear("/imgs/uv-checker-1.png" ),
-                                         await Textura.crear("/imgs/uv-checker-2.png" ),
-                                         await Textura.crear("/imgs/uv-checker-1.png" )))
-      this.objetos.push( new CuadradoXYTextura( await Textura.crear("/imgs/bazinga.jpg" )))
-      this.objetos.push( await MallaPLY.crear( "/plys/beethoven.ply" ) )
-      this.objetos.push( await MallaPLY.crear( "/plys/big_dodge.ply" ) )
-      this.objetos.push( await MallaPLY.crear( "/plys/ant.ply" ) )
-
       // crear los elementos de controles de la aplicación (elementos HTML)
       this.crearElementosControles()
       
@@ -303,7 +262,7 @@ export class AplicacionWRT
    {
       this.canvas.onmousedown   = (me) => this.fgeRatonBotonPulsar(me)
       this.canvas.onmouseup     = (me) => this.fgeRatonBotonLevantar(me)
-      this.canvas.oncontextmenu = (me) => this.fgeMenuContexto(me) //this.fgeRatonBotonPulsar(me) 
+      this.canvas.oncontextmenu = (me) => this.fgeMenuContexto(me) 
       this.canvas.onwheel       = (we) => this.fgeRatonRueda(we)  
       document.onkeyup          = (ke) => this.fgeTecladoLevantarBoton(ke)
       window.onresize           = (ev) => this.redimensionarVisualizar()
@@ -396,23 +355,7 @@ export class AplicacionWRT
    }
    // ------------------------------------------------------------------------- 
 
-   /**
-    * Crear un selector para el objeto actual (asigna a 'this.selector_objeto_actual')
-    */
-   private crearSelectorObjetoActual() : void
-   {
-      const nombref : string = 'AplicacionWRT.crearSelectorObjetoActual'
-      Assert( 0 < this.objetos.length, `${nombref} : no hay objetos en la lista de objetos`)
-
-      let nombres : string[] = []
-      for( const objeto of this.objetos )
-         nombres.push( objeto.leerNombre )
-
-      this.selector_objeto_actual = CrearSelector( this.controles, this.indice_objeto_actual,
-                                                        'id_selector_objeto_actual', 'Objeto&nbsp;act.', nombres )
-
-      this.selector_objeto_actual.onchange = (e) => this.fijarObjetoActual( parseInt((e.target as HTMLSelectElement).value) )
-   }
+   
    // -------------------------------------------------------------------------
 
 
@@ -466,7 +409,6 @@ export class AplicacionWRT
       this.crearCheckboxAristas()
       this.crearCheckboxNormales()
       this.crearCheckboxIluminacion()
-      this.crearSelectorObjetoActual()
       this.crearInputColorDefecto()
       this.crearSliderParamS()
 
@@ -615,79 +557,26 @@ export class AplicacionWRT
    visualizarFrame() : void 
    {
       const nombref : string = 'AplicacionWRT.visualizarFrame:' 
+      Log(`${nombref} inicio `)
       let gl    = this.gl_act 
       let cauce = this.cauce_actual 
 
       let ancho = gl.drawingBufferWidth 
       let alto  = gl.drawingBufferHeight
       
-      //Log( `${nombref} inicio.` )
-
-      // activa rel objeto cauce 
       cauce.activar()  
 
-      // fijar el valor del parámetro S  (antes que cualquier otra cosa)
-      cauce.fijarParamS( this.param_S )
-
-      gl.enable( gl.DEPTH_TEST )
+      gl.disable( gl.DEPTH_TEST )
       gl.viewport( 0, 0, ancho, alto )
-
       gl.clearColor( 0.0, 0.0, 0.0, 1.0 )
-      gl.clear( this.gl_act.DEPTH_BUFFER_BIT | this.gl_act.COLOR_BUFFER_BIT )
+      gl.clear( this.gl_act.COLOR_BUFFER_BIT ) // no hace falta (el cuadrado lo ocupará todo)
+
+      cauce.fijarParamS( this.param_S )
+      cauce.fijarNumColsRows( ancho, alto )
+
+      this.cuadrado.visualizar()
       
-      // activar la cámara, configurando antes su viewport
-      this.camara.fijarViewport( new Viewport( ancho, alto ))
-      this.camara.activar( this.cauce_actual )  // incluye cauce.resetMM
-
-      // fijar el color para todo lo que se dibuje después que no tenga color 
-      cauce.fijarColor( this.color_defecto ) 
-
-      // inicialmente, desactivar texturas y poner la textura actual a null
-      Textura.desactivar()
-
-      // si 'iluminacion' == 'true', activar la colección de fuentes y el material por defecto
-      // en otro caso, desactivar iluminación.
-      if ( this.iluminacion )
-      {
-         cauce.fijarEvalMIL( true )
-         this.material_defecto.activar()
-         this.col_fuentes.activar()
-      }
-      else 
-         cauce.fijarEvalMIL( false )
-
-      // dibujar el objeto actual 
-      Assert( 0 <= this.indice_objeto_actual && this.indice_objeto_actual < this.objetos.length , `${nombref} indice de objeto actual fuera de rango `)
-      this.objetos[ this.indice_objeto_actual ].visualizar(  )
-
-      // desactivar las fuentes de luz (a partir de aquí se dibuja sin iluminación)
-      cauce.fijarEvalMIL( false )
-
-      // dibujar los ejes
-      this.ejes.draw( gl.LINES )
-  
-      
-      // dibujar las aristas del objeto actual con color negro, si procede
-      if ( this.visualizar_aristas )
-      {
-         cauce.pushColor()
-            cauce.fijarColor( new Vec3([ 1.0, 1.0, 1.0 ]))
-            this.objetos[ this.indice_objeto_actual ].visualizarAristas(  )
-         cauce.popColor()
-      }
-
-      // dibujar las normales en color naranja, si procede
-      if ( this.visualizar_normales ) 
-      {
-         cauce.pushColor()
-            cauce.fijarColor( new Vec3([ 1.0, 0.6, 0.1 ]))
-            this.objetos[ this.indice_objeto_actual ].visualizarNormales(  )
-         cauce.popColor()
-      }
-
       ComprErrorGL( gl, `${nombref} al final`)
-
-      //Log(`${nombref} fin.`)
    }
    // ---------------------------------
    /**
@@ -732,35 +621,7 @@ export class AplicacionWRT
       }
       return false 
    }
-   // ------------------------------------------------------------------------------------
 
-   /**
-    * Activa el siguiente objeto de la lista de objetos de 'this', visualiza el frame
-    */
-   siguienteObjeto() : void 
-   {
-      const nombref = 'AplicacionWRT.siguienteObjeto'
-      this.fijarObjetoActual( ( this.indice_objeto_actual +1 ) % this.objetos.length )
-   }
-   // -----------------------------------------------------------------------------------
-
-   /**
-    * Activa un nuevo objeto, dando su índice. Visualiza el frame.
-    * 
-    * @param indice_obj indice del nuevo objeto activo (entre 0 y número de objetos -1)
-    */
-   fijarObjetoActual( indice_obj : number ) : void
-   {
-      const nombref = 'AplicacionWRT.fijarObjetoActivo:'
-      Assert( 0 <= indice_obj && indice_obj < this.objetos.length, `${nombref} índice (${indice_obj}) fuera de rango (0 - ${this.objetos.length-1})` )
-
-      this.indice_objeto_actual = indice_obj
-      this.estado = `Visualizando objeto: ${this.objetos[this.indice_objeto_actual].leerNombre}`
-      Log( `${nombref} visualizando objeto ${this.indice_objeto_actual}: ${this.objetos[this.indice_objeto_actual].leerNombre}` )
-      if ( this.selector_objeto_actual != null )
-         this.selector_objeto_actual.value = `${this.indice_objeto_actual}`
-      this.visualizarFrame()
-   }
    // ------------------------------------------------------------------------------------
 
 
@@ -852,9 +713,6 @@ export class AplicacionWRT
       
       switch ( e.code )
       {
-         case 'KeyO' : 
-            this.siguienteObjeto()  
-            break
          case 'KeyW' : 
             this.fijarVisualizarAristas( ! this.visualizar_aristas ) 
             break
@@ -884,7 +742,7 @@ export class AplicacionWRT
       e.stopImmediatePropagation()
       e.preventDefault()
 
-      //Log(`${nombref} movement x,y == ${e.movementX} ${e.movementY}`)
+      Log(`${nombref} movement x,y == ${e.movementX} ${e.movementY}`)
 
       const dh : number = -0.3*e.movementX
       const dv : number =  0.3*e.movementY 

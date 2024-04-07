@@ -9,9 +9,18 @@
 precision highp float ;
 precision highp int ;
 
+uniform vec2 iResolution ; // número de columnas y filas de pixels
+uniform float u_param_s ;
+
+const vec4 iMouse = vec4( 0.0, 0.0, 0.0, 0.0 ) ;
+const float iTime = 0.0 ;
+
+// root of the number of samples for antialiasing
+const int n_aa = 5 ;
+
 // ----------------------------------------------------------------
 // ISLAMIC STAR PATTERN related functions
-
+// ----------------------------------------------------------------
 
 // parameters and pre-calculated constants
 const float 
@@ -273,8 +282,7 @@ vec4 p6mm_pattern( vec2 p )
 // RAY-TRACER
 // --------------------------------------------------------------------
 
-// root of the number of samples for antialiasing
-const int n_aa = 3 ;
+
 
 // --------------------------------------------------------------------
 
@@ -631,12 +639,12 @@ vec3 horizon_plane_color( in InterStat is, out ShadingPoint sp )
 // compute primary ray origin and direction, from the fragment coord and
 // camera parameters
 
-Camera compute_camera( in vec3 cam_look_at )
+Camera compute_camera( in vec3 cam_look_at, in float dist )
 {
 
     Camera cam ;
     vec3 cam_vup = vec3( 0.0, 1.0, 0.0 );
-    float dist = 2.0 ;
+    //float dist = 2.0 ;
     vec2 dxy = iMouse.xy - abs(iMouse.zw) ; // sign of .zw tells if a click happened or not...
 
     float fx   = 0.011,
@@ -685,36 +693,37 @@ Ray primary_ray( in vec2 sample_coords, in Camera cam )
 
 vec3 background_color( in Ray ray )
 {
-    float b = max( 0.0, dot( ray.dir, scene.sun_dir ) );
-    if ( 1.0-scene.sun_ap_sin < b )
-        return vec3( 1.0,1.0,1.0 );
-    //else
-    //    return max(0.5,pow(b,5.0))*vec3( 0.0, 0.1, 0.2 );
+    return vec3( 0.0, 0.0, 0.2 );
+    // float b = max( 0.0, dot( ray.dir, scene.sun_dir ) );
+    // if ( 1.0-scene.sun_ap_sin < b )
+    //     return vec3( 1.0,1.0,1.0 );
+    // //else
+    // //    return max(0.5,pow(b,5.0))*vec3( 0.0, 0.1, 0.2 );
     
-    vec3 d = vec3( ray.dir.x, ray.dir.y/2.0, ray.dir.z ),
-         da = abs( d );
+    // vec3 d = vec3( ray.dir.x, ray.dir.y/2.0, ray.dir.z ),
+    //      da = abs( d );
     
-    vec2 tcoords ;
-    if ( da.x <= da.y && da.z <= da.y ) // max is Y (use x,z)
-        tcoords = vec2( 0.5, 0.5) + 0.5*vec2( d.x, d.z )/da.y;
-    else if ( da.z <= da.x && da.y <= da.x ) // max is X (use z,y)
-        tcoords = vec2( 0.5, 0.0 ) + vec2( 0.5*d.z, d.y )/da.x;
-    else // max is Z (use x,y)
-        tcoords = vec2( 0.5, 0.0 ) + vec2( 0.5*d.x, d.y )/da.z;
+    // vec2 tcoords ;
+    // if ( da.x <= da.y && da.z <= da.y ) // max is Y (use x,z)
+    //     tcoords = vec2( 0.5, 0.5) + 0.5*vec2( d.x, d.z )/da.y;
+    // else if ( da.z <= da.x && da.y <= da.x ) // max is X (use z,y)
+    //     tcoords = vec2( 0.5, 0.0 ) + vec2( 0.5*d.z, d.y )/da.x;
+    // else // max is Z (use x,y)
+    //     tcoords = vec2( 0.5, 0.0 ) + vec2( 0.5*d.x, d.y )/da.z;
     
-    const float margin = 0.001 ;
+    // const float margin = 0.001 ;
     
-    if ( tcoords.x < margin || 1.0-margin < tcoords.x   )
-        return vec3( 0.0, 0.0, 0.0 );
+    // if ( tcoords.x < margin || 1.0-margin < tcoords.x   )
+    //     return vec3( 0.0, 0.0, 0.0 );
         
-    if ( tcoords.y < margin || 1.0-margin < tcoords.y )
-        return vec3( 0.0, 0.0, 0.0 );
+    // if ( tcoords.y < margin || 1.0-margin < tcoords.y )
+    //     return vec3( 0.0, 0.0, 0.0 );
     
-   	vec2 tc2 = (tcoords-vec2(margin,margin))/(1.0-2.0*margin) ;
-    const float nrep = 2.0 ;
+   	// vec2 tc2 = (tcoords-vec2(margin,margin))/(1.0-2.0*margin) ;
+    // const float nrep = 2.0 ;
         
-    vec4 col = texture( iChannel0, fract( nrep*tc2 ));
-    return 1.0*pow( col.rgb, 2.0*vec3(1.0, 1.0, 1.0) ) ;
+    // vec4 col = texture( iChannel0, fract( nrep*tc2 ));
+    // return 1.0*pow( col.rgb, 2.0*vec3(1.0, 1.0, 1.0) ) ;
     
 }
 // --------------------------------------------------------------------
@@ -957,18 +966,23 @@ vec4 AA_pixel_color( in vec2 pixel_coords )
 }
 
 // --------------------------------------------------------------------
+// --------------------------------------------------------------------
 
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
+in vec2 posicion ;
+layout (location = 0) out vec4 frag_color ;
+
+void main(  )
 {
    
 
     // scene parameters
     
-    vec3 cam_look_at = vec3( 0.0, 0.15, 0.5 ) 
+    vec3 cam_look_at = vec3( -0.4, 0.4, 0.5 ) 
                           + cos( iTime )*vec3(1.0,0.0,0.0)
                           + sin( iTime )*vec3(0.0,0.1,0.3) ;
+    float dist = 2.0 ;
 
-    scene.camera  = compute_camera( cam_look_at );
+    scene.camera  = compute_camera( cam_look_at, dist );
     scene.sun_dir = normalize( vec3( 0.2, 1.2, 1.0 ) );
     scene.sun_ap_sin = 0.003 ;
     
@@ -1059,8 +1073,10 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     // ----
     
-    vec2 pixel_coords = fragCoord.xy ;
+    vec2 fc01 = 0.5* (vec2(1.0,1.0) + posicion );
+    vec2 pixel_coords = trunc( iResolution*fc01 );
 
-    fragColor = AA_pixel_color( pixel_coords ) ;
+    frag_color = AA_pixel_color( pixel_coords ) ;
+    //frag_color = vec4( fc01.x, fc01.y, 0.0, 1.0 );
                
 }

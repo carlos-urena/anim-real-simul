@@ -149,25 +149,7 @@ export class CamaraOrbital
         //Log(`${nombref} matriz de vista  == ${this.matriz_vista}`)        
     }
 
-    /**
-     * Activar esta cámara en un cauce.
-     * actualiza las matrices de vista y proyeccion, y las pasa al cauce.
-     * Hace 'reset' (reinicializa) de la matriz de modelado en el cauce.
-     * @param cauce (Cauce) cauce en el que se activa la matriz
-     */
-    activar( cauce : Cauce ) : void
-    {
-        const nombref : string = 'Camera.activar:'
-
-        //Log(`${nombref} activación de cámara: '${this.nombre}'`)
-
-        this.actualizarMatrizProyeccion()
-        this.actualizarMatrizVista()
-
-        cauce.fijarMatrizVista( this.matriz_vista )
-        cauce.fijarMatrizProyeccion( this.matriz_proyeccion )
-        cauce.resetMM()
-    }
+    
     /**
      * Modifica los ángulos horizonal y vertical de la cámara orbital 
      * 

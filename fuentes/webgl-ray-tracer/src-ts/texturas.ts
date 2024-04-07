@@ -94,33 +94,7 @@ export class Textura
 
 
    }
-   // -----------------------------------------------------------------------------------------
-
-   activar(  ) : void
-   {
-      const nombref : string = 'Textura.activar:'
-      let gl = AplicacionWRT.instancia.gl
-      let cauce : Cauce = AplicacionWRT.instancia.cauce 
-
-      ComprErrorGL( gl, `${nombref} al inicio` )
-
-      if ( this.texture == null ) 
-         this.crearTexturaWebGL()
-      
-      Textura.actual = this 
-      cauce.fijarEvalText( true, this.texture )
-
-      ComprErrorGL( gl, `${nombref} al final` )
-   }
-   // -------------------------------------------------------------------------------------
-   // Métodos estáticos ('static') o de clase (no se ejecutan sobre una instancia)
-
-   public static desactivar(  ) : void  
-   {
-      let cauce : Cauce = AplicacionWRT.instancia.cauce 
-      Textura.actual = null 
-      cauce.fijarEvalText( false, null )
-   }
+   
    // --------------------------------------------------------------------
    
 
@@ -139,39 +113,7 @@ export class Textura
    }
    // --------------------------------------------------------------------
    
-   /**
-    * Hace push (en la pila de texturas) de la textura actualmente activada
-    * (si no hay ninguna textura activada, introduce 'null')
-    */
-   public static push() : void 
-   {
-      const nombref : string = "Material.push:"
-      Textura.pila.push( Textura.actual )
-   }
-   // --------------------------------------------------------------------
-
-   /**
-    * Hace pop de la pila de texturas (la pila no puede estar vacía)
-    * - Lee la textura en el top de la pila.
-    * - Si esa textura es 'null', desactiva las texturas, en otro caso activa esa textura.
-    * 
-    */
-   public static pop() : void 
-   {
-      const nombref : string = "Material.pop:"
-      let pt = Textura.pila
-
-      if ( pt.length == 0 )
-         throw new Error(`${nombref} la pila está vacía`)
-
-      let text = pt[ pt.length-1 ]
-      pt.pop()
-      
-      if ( text == null )
-         Textura.desactivar()
-      else
-         text.activar()
-   }
+   
 }
 // -----------------------------------------------------------------------------------------
 
