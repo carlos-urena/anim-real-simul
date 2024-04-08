@@ -14,6 +14,6 @@ donde `[subcarpeta]` es opcional, si se especifica designa el path relativo de u
 
 ## Fuentes
 
-El código fuente de los tres tipos de aplicaciones se puede encontrar aquí: 
+las carpetas con código fuente son estas:
 
-+ **WebGL Path-tracer**: fuentes GLSL + typscript de un pequeño [_Ray Tracer_](fuentes/webgl-ray-tracer)
++ **WebGL Ray-tracer**: fuentes GLSL + typescript de un pequeño [_Ray Tracer_](fuentes/webgl-ray-tracer)
