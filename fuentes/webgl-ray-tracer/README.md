@@ -35,6 +35,8 @@ Aquí abajo se ve una captura de la aplicación con la iluminación desactivada 
 <img src="capturas/captura-controles-no-ilum.png" width="85%">
 </p>
 
+Hay que tener en cuenta que cuando se usan un número de muestras por pixel superior a la unidad, el tiempo que se tarda en renderizar cada frame aumenta muchísimo.
+
 ## Prerrequisitos: 
 
 + Intérprete de *python3* para lanzar el servidor
