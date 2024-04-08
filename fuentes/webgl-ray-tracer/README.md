@@ -1,7 +1,9 @@
 # ARS: Trazador de Rayos sencillo en un fragment shader
 
 
+<p align="center">
 <img src="capturas/wglrt-1.png" height="350px"><img src="capturas/wglrt-2.png" height="350px">
+</p>
 
 
 
@@ -14,20 +16,24 @@ Para ejecutar el servidor Web de la aplicación, es necesario antes leer los pre
 
 Una vez cargada la aplicación en el navegador, se puede observar la imagen creada por WebGL (a la izquierda) y un cuadro de controles (a la derecha), tal y como se ve aquí:
 
+<p align="center">
 <img src="capturas/captura-controles-ilum.png" height="300px">
+</p>
 
 Para modificar los parámetros de visualización, se puede:
   
   - Modificar la orientación de la cámara, arrastrando el ratón con el botón derecho pulsado.
   - Mover la cámara hacia adelante y hacia atrás, con la rueda del ratón.
   - Modificar alguno de los controles que aparecen en pantalla, a saber:
-      - Botón para activar o desactivar la iluminación. Inicialmente está activado, se hace _ray-tracing_ completo con rayos secundarios. Cuando se desactiva, solo se procesan los rayos primarios.
-      - Deslizador con la raíz del número de muestras por pixel. Permite variar el valor _n_ dicha raiz entre 1 y 9. El número total de muestras por pixel es <it>n</it><sup>2<sup>
+      - Botón para activar o desactivar la iluminación. Inicialmente está activado, se hace _ray-tracing_ completo con rayos secundarios. Cuando se desactiva, solo se procesan los rayos primarios (no hay sombras, reflejos ni transparencias), y no se evalua el MIL.
+      - Deslizador con la raíz del número de muestras por pixel. Permite variar el valor dicha raiz (_n_) entre 1 y 9. El número total de muestras por pixel es <it>n</it><sup>2<sup> (así que podemos variar entre 1 y 91 muestras por pixel)
       - El valor del parámetro S (entre 0 y 1), para modificar diversos aspectos del Ray-tracer (por defecto no se modifica nada).
 
 Aquí abajo se ve una captura de la aplicación con la iluminación desactivada (únicamente se procesan rayos primarios):
 
+<p align="center">
 <img src="capturas/captura-controles-no-ilum.png" height="300px">
+</p>
 
 ## Prerrequisitos: 
 
