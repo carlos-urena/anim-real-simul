@@ -60,9 +60,13 @@ export class Cauce
     // objeto programa 
     private programa! : WebGLProgram 
 
-    private param_s : number = 0.0 
-    private ac_long_grad = 0.0 
-    private ac_lat_grad  = 0.0
+    private param_s      : number = 0.0 
+    private ac_long_grad : number = 0.0 
+    private ac_lat_grad  : number = 0.0
+    private cam_dist     : number = 2.0
+    private naa          : number = 1
+    private eval_text    : boolean = true
+    private solo_primarios : boolean = false 
     
     // contexto WebGL, dado en el constructor 
     private gl! : WebGLRenderingContext | WebGL2RenderingContext 
@@ -75,6 +79,10 @@ export class Cauce
     private loc_iResolution  : WebGLUniformLocation | null = null
     private loc_ac_long_grad : WebGLUniformLocation | null = null
     private loc_ac_lat_grad  : WebGLUniformLocation | null = null
+    private loc_cam_dist     : WebGLUniformLocation | null = null
+    private loc_eval_text    : WebGLUniformLocation | null = null
+    private loc_naa          : WebGLUniformLocation | null = null
+    private loc_solo_primarios : WebGLUniformLocation | null = null
     
     // ---------------------------------------------------------------------------
     // Métodos 
@@ -121,15 +129,33 @@ export class Cauce
 
         gl.useProgram( this.programa );
         
-        // obtener las 'locations' de los parámetros uniform       
+        // fijar el valor del parámetro S
         this.loc_param_s = this.leerLocation( "u_param_s" )
-        this.loc_iResolution = this.leerLocation( "iResolution" );
         this.fijarParamS( this.param_s )
 
-        this.loc_ac_long_grad = this.leerLocation( "u_ac_long_grad")
-        this.loc_ac_lat_grad = this.leerLocation( "u_ac_lat_grad")
+        // leer el location de la resolución
+        this.loc_iResolution = this.leerLocation( "iResolution" );
+        
 
+        // ángulos de la cámara 
+        this.loc_ac_long_grad = this.leerLocation( "u_ac_long_grad" )
+        this.loc_ac_lat_grad  = this.leerLocation( "u_ac_lat_grad" )
         this.fijarAngCamGrad( this.ac_long_grad, this.ac_lat_grad )
+        
+        this.loc_eval_text = this.leerLocation( "u_eval_text" )
+
+        // distancia de la cámara al look-at
+        this.loc_cam_dist = this.leerLocation( "u_cam_dist" )
+        this.fijarCamDist( this.cam_dist )
+
+        // booleano para trazar únicamente rayos primarios 
+        this.loc_solo_primarios = this.leerLocation( "u_solo_primarios" )
+        this.fijarSoloPrimarios( this.solo_primarios )
+
+        // valor de 'naa' 
+        this.loc_naa = this.leerLocation( "u_naa" )
+        this.fijarNaa( this.naa )
+
 
         // desactivar objeto programa
         gl.useProgram( null ); 
@@ -268,6 +294,7 @@ export class Cauce
 
     /**
      * Activa el objeto programa (hace 'useProgram' )
+     * (this.gl debe estar correctamente inicializado)
      */
     public activar() : void
     {
@@ -290,6 +317,11 @@ export class Cauce
     }
     // ---------------------------------------------------------------------------
 
+    /**
+     * Fija el tamaño del framebuffer
+     * @param nuevo_num_cols (number) entero con el número de columnas de pixels
+     * @param nuevo_num_rows (number) entero con el número de filas de pixels
+     */
     public fijarNumColsRows( nuevo_num_cols : number, nuevo_num_rows : number ) : void 
     {
         let ires = new Float32Array([ nuevo_num_cols, nuevo_num_rows ])
@@ -297,7 +329,11 @@ export class Cauce
     }
     // ---------------------------------------------------------------------------
 
-
+    /**
+     * Fija los ángulos de longitud y latitud de la cámara
+     * @param nuevo_ac_long_grad (number) ángulo de longitud en grados
+     * @param nuevo_ac_lat_grad (number) ángulo de latitud en grados
+     */
     public fijarAngCamGrad( nuevo_ac_long_grad : number, nuevo_ac_lat_grad : number ) : void 
     {
         this.ac_lat_grad = nuevo_ac_lat_grad
@@ -306,8 +342,69 @@ export class Cauce
         this.gl.uniform1f( this.loc_ac_long_grad, this.ac_long_grad )
         this.gl.uniform1f( this.loc_ac_lat_grad, this.ac_lat_grad )
     }
+    // ---------------------------------------------------------------------------
 
-    
+
+    /**
+     * Fija la distancia de la cámara
+     * @param nuevo_cam_dist  (number) nueva distancia de la cámara
+     */
+    public fijarCamDist( nuevo_cam_dist : number )
+    {
+        this.cam_dist = nuevo_cam_dist
+        Log(`Cauce.fijarCamDist: cam_dist = ${this.cam_dist}`)
+        this.gl.uniform1f( this.loc_cam_dist, this.cam_dist )
+    }
+    // ---------------------------------------------------------------------------
+
+    public fijarNaa( nuevo_naa : number ) : void 
+    {
+        this.naa = Math.max( 1, Math.floor(nuevo_naa) )
+        Log(`Cauce: naa = ${this.naa}`)
+        this.gl.uniform1i( this.loc_naa, this.naa )
+    }
+
+    // ---------------------------------------------------------------------------
+
+    public fijarSoloPrimarios( nuevo_solo_primarios : boolean ) : void 
+    {
+        this.solo_primarios = nuevo_solo_primarios
+        this.gl.uniform1i( this.loc_solo_primarios, this.solo_primarios ? 1 : 0 )
+    }
+    // ---------------------------------------------------------------------------
+
+
+    /**
+     * Activa o desactiva el uso de una textura en los shaders (fija uniform)
+     * Si se activa, hay que especificar el objeto de textura webgl a usar.
+     * 
+     * @param nuevo_eval_text 
+     * @param texture 
+     */
+    public fijarEvalText( nuevo_eval_text : boolean, texture: WebGLTexture | null  ) : void 
+    {
+        const nombref : string = "Cauce.fijarEvalText:"
+        let gl = this.gl 
+
+        // registrar nuevo valor
+        this.eval_text = nuevo_eval_text
+        this.gl.uniform1i( this.loc_eval_text, b2n( this.eval_text ) )
+
+        // si se está activando, asociar el sampler de textura en el shader con el objeto textura de la aplicación
+        if ( nuevo_eval_text )
+        {
+            if ( texture == null )
+                throw Error(`${nombref} si se habilita uso de texturas, se debe dar una textura no nula` )
+            
+            gl.activeTexture( gl.TEXTURE0 )  // ver nota aquí abajo.
+            gl.bindTexture( gl.TEXTURE_2D, texture )
+            
+            // Nota: 'activeTexture' activa la unidad 0 de texturas, que está activada por defecto,  solo sería necesario si hubiese más de una textura en el shader (las demás irían en la unidad 1, la 2, etc...), no es el caso, pero lo pongo por si acaso, ver: https://webglfundamentals.org/webgl/lessons/webgl-2-textures.html (al final)
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+
 
 
 } // fin clase 'Cauce'

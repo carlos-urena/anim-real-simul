@@ -46,6 +46,28 @@ export class Textura
       Log(`${nombref} textura '${this.url}' cargada, dimensiones == ${this.elemento_img.width} x ${this.elemento_img.height}`)
    }
 
+   // -----------------------------------------------------------------------------------------
+
+   activar(  ) : void
+   {
+      const nombref : string = 'Textura.activar:'
+      let gl = AplicacionWRT.instancia.gl
+      let cauce : Cauce = AplicacionWRT.instancia.cauce 
+
+      ComprErrorGL( gl, `${nombref} al inicio` )
+
+      if ( this.texture == null ) 
+         this.crearTexturaWebGL()
+      
+      Textura.actual = this 
+      cauce.fijarEvalText( true, this.texture )
+
+      ComprErrorGL( gl, `${nombref} al final` )
+   }
+
+   // -----------------------------------------------------------------------------------------
+
+
    crearTexturaWebGL( ) : void
    {
       const nombref : string = 'Textura.crearTexturaWebGL'

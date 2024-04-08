@@ -15,270 +15,32 @@ uniform float u_param_s ;  // parámetro S
 uniform float u_ac_long_grad ; // ángulo de camara: longitud (en grados)
 uniform float u_ac_lat_grad ; // ángulo de camara: latitud (en grados)
 
+uniform bool u_solo_primarios ;
+
+uniform float u_cam_dist ; // distancia de la cámara al look at
+uniform int u_naa ; // raiz del número de muestras por pixel
+
+uniform sampler2D u_textura_0 ;
+
 const vec4 iMouse = vec4( 0.0, 0.0, 0.0, 0.0 ) ;
 const float iTime = 0.0 ;
 
 // root of the number of samples for antialiasing
-const int n_aa = 1 ;
-
-// ----------------------------------------------------------------
-// ISLAMIC STAR PATTERN related functions
-// ----------------------------------------------------------------
-
-// parameters and pre-calculated constants
-const float 
-    sqr2       = 1.41421356237, // square root of 2
-    sqr3       = 1.73205080756, // square root of 3.0
-    sqr2_inv   = 1.0/sqr2 ,
-    sqr3_inv   = 1.0/sqr3 ,
-    cos30      = 0.86602540378, // cos(30 degrees)
-    sin30      = 0.50000000000, // sin(30 degrees)
-    l          = 5.5,          // length of triangle in NDC (mind --> 1.0)
-    l_inv      = 1.0/l ,       // length inverse
-    line_w     = 0.03,         // line width for basic symmetry lines render
-    sw         = 0.020 ;       // stripes half width for islamic star pattern
-
-const vec2  
-    u        = 1.0*vec2( 1.0, 0.0  ) ,          // grid basis: U vector
-    v        = 0.5*vec2( 1.0, sqr3 ) ,          // grid basis: V vector
-    u_dual   = 1.0*vec2( 1.0, -sqr3_inv ) ,     // dual grid basis: U vector
-    v_dual   = 2.0*vec2( 0.0,  sqr3_inv ) ,     // dual grid basis: V vector
-    tri_cen  = vec2( 0.5, 0.5*sqr3_inv ) ;      // triangle center
-
-    
-// -----------------------------------------------------------------------------------
-// point orbit transformation parameters
-int 
-    nMirrorOdd = 0 , 
-    nMirror    = 0 ,
-	nGridX     = 0 , 
-    nGridY     = 0 ;
-
-
-// -------------------------------------------------------------------------------
-// mirror reflection of 'p' around and axis through 'v1' and 'v2'
-// (only for points to right of the line from v1 to v2)
-//
-vec2 Mirror( vec2 p, vec2 v1, vec2 v2 )
-{
- 	vec2   s = v2-v1 ,
-           n = normalize(vec2( s.y, -s.x )) ;
-    float  d = dot(p-v1,n) ;
-    
-    if ( 0.0 <= d )
-    {
-       nMirrorOdd = 1-nMirrorOdd ;
-       nMirror = nMirror+1 ;
-       return p-2.0*d*n ;
-    }
-    else
-       return p ;
-}
-// -------------------------------------------------------------------
-// Signed perpendicular distance from 'p' to line through 'v1' and 'v2'
-
-float SignedDistance( vec2 p, vec2 v1, vec2 v2 )
-{
- 	vec2   s = v2-v1 ,
-           n = normalize(vec2( s.y, -s.x )) ;
-    return dot(p-v1,n) ;
-}
-// -------------------------------------------------------------------
-// un-normalized signed distance to line
-
-float UnSignedDistance( vec2 p, vec2 v1, vec2 v2 )
-{
- 	vec2   s = v2-v1 ,
-           un = vec2( s.y, -s.x ) ;
-    return dot(p-v1,un) ;
-}
-// -------------------------------------------------------------------
-// Signed perpendicular distance from 'p' to polyline from 'v1' 
-// to 'v2' then to 'v3'
-
-float DoubleSignedDistance( vec2 p, vec2 v1, vec2 v2, vec2 v3 )
-{
- 	
-    vec2  dir1 = v2 + normalize(v1-v2),
-          dir3 = v2 + normalize(v3-v2);
-        
-    vec2  vm = 0.5*(dir1+dir3) ;
-    
-    float dm = UnSignedDistance( p, v2, vm ) ;
-    
-    if ( dm >= 0.0 )
-   		return SignedDistance( p, v1, v2 ) ;
-   	else
-        return SignedDistance( p, v2, v3 ) ; 
-}
-// -------------------------------------------------------------------------------
-// Takes 'p0' to the group's fundamental region, returns its coordinates in that region
-
-vec2 p6mm_ToFundamental( vec2 p0 ) 
-{
-    nMirrorOdd = 0 ;
-    nMirror    = 0 ;
-    
-    // p1 = fragment coords. in the grid reference frame
-    
-    vec2 p1 = vec2( dot(p0,u_dual), dot(p0,v_dual) );
-    
-    // p2 = fragment coords in the translated grid reference frame 
-    
-    vec2 p2 = vec2( fract(p1.x), fract(p1.y) ) ;
-    
-    nGridX = int(p1.x-p2.x) ; // largest integer g.e. to p1.x
-    nGridY = int(p1.y-p2.y) ; // largest integer g.e. to p2.x
-    
-    // p3 = barycentric coords in the translated triangle
-    // (mirror, using line x+y-1=0 as axis, when point is right and above axis)
-    
-    vec2 p3 = Mirror( p2, vec2(1.0,0.0), vec2(0.0,1.0) );
-    
-    // p4 = p3, but expressed back in cartesian coordinates
-    
-    vec2 p4 = p3.x*u + p3.y*v ;
-    
-    // p7 = mirror around the three lines through the barycenter, perp. to edges.
-    
-    vec2 p5 = Mirror( p4, vec2(0.5,0.0), tri_cen );
-    vec2 p6 = Mirror( p5, vec2(1.0,0.0), tri_cen );
-    vec2 p7 = Mirror( p6, tri_cen, vec2(0.0,0.0) );
-  
-    return p7 ;
-}
-
-// --------------------------------------------------------------------
-// A possible distance function
-
-float DistanceFunc( float d )
-{
-   return 1.0-smoothstep( line_w*0.5, line_w*1.5, d );   
-}
-
-// -------------------------------------------------------------------------------
-// Point color for basic symmetry lines in (r,g,b)
-
-vec4 p6mm_SimmetryLines( vec2 p_ndc )
-{
-
-    vec2 pf = p6mm_ToFundamental( p_ndc );
-    
-    float d1 = abs(pf.y),
-          d2 = abs(pf.x-0.5),
-          d3 = abs( SignedDistance( pf, tri_cen, vec2(0.0,0.0) ) );
-     
-    vec4 res = vec4( 0.0, 0.0, 0.0, 1.0 ) ;
-        
-    res.r = DistanceFunc(d2);
-    res.g = DistanceFunc(d1);
-    res.b = DistanceFunc(d3);
-    
-    return res ;    
-}
+//const int n_aa = 1 ;
 
 // ---------------------------------------------------------------------
-// Stripe half width for star pattern
+// Color for base plane pattern
 
-vec4 Stripe( float d )
+vec4 FloorPattern( vec2 p )
 {
-   if ( d > sw*0.85 )
-     return vec4( 0.0,0.0,0.0,1.0 );
-   else
-     return vec4(1.0,1.0,1.0,1.0)  ;
-}
+    int ix = int(floor(p.x*2.0)),
+        iy = int(floor(p.y*2.0));
 
-// ---------------------------------------------------------------------
-// Color for islamic star pattern
-
-vec4 p6mm_pattern( vec2 p )
-{
-    vec2 pf = p6mm_ToFundamental( p );
+    if ( (ix+iy) % 2 == 0 )
+        return vec4( 0.3, 0.3, 0.6, 1.0 );
+    else 
+        return vec4( 0.9, 0.9, 1.0, 1.0 );
     
-    //return p6mm_SimmetryLines( p ) ;
-    vec2 c  = tri_cen ;
-    
-    // constants defining the stripes 
-    float 
-        f   = 0.30 ,
-        fs1 = 0.14 ,
-        s1  = fs1*c.x,
-        s2  = 0.5*s1 ;
-        
-    // stripes vertexes
-    vec2 
-        // upper strip
-        u1 = vec2( f*c.x, 0.0 ) ,
-        u2 = vec2( c.x, (1.0-f)*c.y ),
-        
-        // lower strip
-        l1 = vec2( c.x, s1+s2 ),
-        l2 = vec2( c.x-s2, s1 ),
-        l3 = vec2( sqr3*s1, s1 ),
-        
-        // right strip
-        r1 = vec2( c.x-s1, (1.0-fs1)*c.y ),
-        r2 = vec2( c.x-s1, s2 ) ,
-        r3 = vec2( c.x-s1-s2, 0.0 ),
-        
-    	// origin star strip
-        mm = vec2( s1*(sqr3-1.0/3.0), s1*(1.0-sqr3_inv) );
-                        
-    // signed and unsigned distances to stripes:
-    
-    float
-        d1s = SignedDistance( pf, u1, u2 ) ,
-        d2s = DoubleSignedDistance( pf, l1, l2, l3 ) ,
-        d3s = DoubleSignedDistance( pf, r1, r2, r3 ) ,
-        d4s = DoubleSignedDistance( pf, u1, mm, l3 ) ,
-        d1  = abs( d1s ),
-        d2  = abs( d2s ),
-        d3  = abs( d3s ),
-        d4  = abs( d4s );
-    
-   
-    // stripes inclusion
-    bool in1, in2, in3, in4 ;
-    
-    if ( nMirrorOdd == 0 )
-    {
-        in1 = (d1 < sw) && ! (d2 < sw) && ! (d4 < sw);
-        in2 = (d2 < sw) && ! (d3 < sw);
-        in3 = (d3 < sw) && ! (d1 < sw);
-        
-        in4 = (d4 < sw) && ! (d2 < sw);
-    }
-    else
-    {
-        in1 = (d1 < sw) && ! (d3 < sw) ;
-        in2 = (d2 < sw) && ! (d1 < sw) && ! (d4 < sw);;
-        in3 = (d3 < sw) && ! (d2 < sw);
-        
-        in4 = (d4 < sw) && ! (d1 < sw);
-    } 
-    
-    vec4 col ;
-    
-    // compute final color
-    
-    if ( in1 )      
-        col = Stripe( d1 ) ;
-    else if ( in2 ) 
-        col = Stripe( d2 ) ;
-    else if ( in3 ) 
-        col = Stripe( d3 ) ; 
-    else if ( in4 )
-        col = Stripe( d4 ) ;   
-    else if ( d2s < 0.0 && d3s < 0.0 )
-        col = vec4( 0.0, 0.4, 0.0, 1.0 ) ;
-    else if ( d1s < 0.0 && d2s < 0.0 || d1s <0.0 && d3s < 0.0 )
-        col = vec4( 0.1, 0.1, 0.1, 1.0 );
-    else if ( d1s < 0.0 || d2s < 0.0 )
-        col = vec4( 0.0, 0.4, 0.9, 1.0 );   
-    else    
-        col = vec4( 0.6, 0.0, 0.0, 1.0 ) ; 
-       
-    return col ;
 }
 
 // --------------------------------------------------------------------
@@ -351,11 +113,7 @@ const int id_base_plane = 0,
           id_sphere2    = 2,
           id_sphere3    = 3,
           id_sphere4    = 4,
-          
           id_sphere5    = 5,
-          
-          id_sphere6    = 6,
-          
           num_objects   = 6 ;
     
 struct Scene
@@ -367,9 +125,8 @@ struct Scene
           sphere2,
           sphere3, // outer transparent sphere (white one)
           sphere4, // inner transparent sphere (white one)
-          sphere5, // outer transparent sphere (green one)
-          sphere6; // inner transparent sphere (green one)
-    
+          sphere5; // diffuse green sphere
+          
    Material materials[num_objects] ;
 } ;
     
@@ -389,7 +146,7 @@ struct RayStackEntry
    float weight ;    // weight of this color in parent ray, if any
 } ;
     
-const int max_n_stack = 20 ;  // max number of items in the stack
+const int max_n_stack = 10 ; // 20 ;  // max number of items in the stack
 
 RayStackEntry  stack[max_n_stack] ;
     
@@ -495,27 +252,32 @@ bool ray_blocked( in Ray ray )
 
    if ( ray.obj_id != id_sphere2 )
    {
-   	  sphere_intersect( scene.sphere2, is );
+   	sphere_intersect( scene.sphere2, is );
       if ( is.id_hit != -1 )
         return true ;
    }
     
    if ( ray.obj_id != id_sphere3 )
    {
-   	  sphere_intersect( scene.sphere3, is );
+   	sphere_intersect( scene.sphere3, is );
       if ( is.id_hit != -1 )
         return true ;
    }
     
    if ( ray.obj_id != id_sphere4 )
    {
-   	  sphere_intersect( scene.sphere4, is );
+   	sphere_intersect( scene.sphere4, is );
+      if ( is.id_hit != -1 )
+        return true ;
+   }
+
+   if ( ray.obj_id != id_sphere5 )
+   {
+   	sphere_intersect( scene.sphere5, is );
       if ( is.id_hit != -1 )
         return true ;
    }
     
-  
-
    return false ;
 }
 
@@ -540,7 +302,7 @@ bool sun_dir_visible( in ShadingPoint sp )
 vec3 phong_component( in vec3 nor, in vec3 view, in vec3 light )
 {
     float vh = dot( nor, normalize( view+light ) ),
-          b  = pow( vh, 8.0 );
+          b  = pow( vh, 32.0 );
     
     return vec3( b, b, b );
 }
@@ -549,11 +311,17 @@ vec3 phong_component( in vec3 nor, in vec3 view, in vec3 light )
 
 vec3 sphere_shader( in Sphere sphere, in ShadingPoint sp )
 {
-    vec3 res = vec3(0.0,0.0,0.0);
+    if ( u_solo_primarios )
+    {
+      float b = max( 0.2, sp.nor.y );
+      return b*sphere.color ;
+    }
+
+    vec3 res = 0.1*sphere.color ;
     
     if ( sun_dir_visible( sp ) )
     {
-      float ldn = dot( sp.nor, scene.sun_dir ),
+      float ldn = max( 0.0, dot( sp.nor, scene.sun_dir )),
             kd  = scene.materials[sp.obj_id].kd ,
             kph = scene.materials[sp.obj_id].kph ;
         
@@ -563,7 +331,7 @@ vec3 sphere_shader( in Sphere sphere, in ShadingPoint sp )
          res += kph*phong_component( sp.nor, sp.view, scene.sun_dir ); 
     }
 
-    return max(res, 0.1*sphere.color ) ;
+    return res ;
 }
 
 // --------------------------------------------------------------------
@@ -584,12 +352,14 @@ vec3 sphere_color( in Sphere sphere, in InterStat is,  out ShadingPoint sp )
 
 vec3 horizon_plane_shader( in ShadingPoint sp )
 {
-    
+   if ( u_solo_primarios )
+      return FloorPattern( sp.pos.xz ).rgb;
+
     float vis = sun_dir_visible( sp ) ?  1.0 : 0.5 ,
           kd  = scene.materials[sp.obj_id].kd,
           kph = scene.materials[sp.obj_id].kph ;
 
-    vec4 col = p6mm_pattern( sp.pos.xz );
+    vec4 col = FloorPattern( sp.pos.xz );
     vec3 nor = vec3( 0.0, 1.0, 0.0 );
     vec3 res_color = vis*kd*col.rgb ;
     
@@ -603,14 +373,13 @@ vec3 horizon_plane_shader( in ShadingPoint sp )
 
 vec3 horizon_plane_color( in InterStat is, out ShadingPoint sp )
 {
+   sp.pos    = is.ray.org + is.t_hit*is.ray.dir ;
+   sp.view   = -is.ray.dir ;
+   sp.obj_id = is.id_hit ;
+   sp.nor    = vec3( 0.0, 1.0, 0.0 );
+   sp.in_glass = false ;
 
-    sp.pos    = is.ray.org + is.t_hit*is.ray.dir ;
-    sp.view   = -is.ray.dir ;
-    sp.obj_id = is.id_hit ;
-    sp.nor    = vec3( 0.0, 1.0, 0.0 );
-    sp.in_glass = false ;
-
-    return horizon_plane_shader( sp );
+   return horizon_plane_shader( sp );
 }
 
 // --------------------------------------------------------------------
@@ -671,40 +440,48 @@ Ray primary_ray( in vec2 sample_coords, in Camera cam )
 }
 
 // --------------------------------------------------------------------
+// return background color for ray (which doest not intersect nothing 
 
 vec3 background_color( in Ray ray )
 {
-    return vec3( 0.0, 0.0, 0.2 );
-    // float b = max( 0.0, dot( ray.dir, scene.sun_dir ) );
-    // if ( 1.0-scene.sun_ap_sin < b )
-    //     return vec3( 1.0,1.0,1.0 );
-    // //else
-    // //    return max(0.5,pow(b,5.0))*vec3( 0.0, 0.1, 0.2 );
-    
-    // vec3 d = vec3( ray.dir.x, ray.dir.y/2.0, ray.dir.z ),
-    //      da = abs( d );
-    
-    // vec2 tcoords ;
-    // if ( da.x <= da.y && da.z <= da.y ) // max is Y (use x,z)
-    //     tcoords = vec2( 0.5, 0.5) + 0.5*vec2( d.x, d.z )/da.y;
-    // else if ( da.z <= da.x && da.y <= da.x ) // max is X (use z,y)
-    //     tcoords = vec2( 0.5, 0.0 ) + vec2( 0.5*d.z, d.y )/da.x;
-    // else // max is Z (use x,y)
-    //     tcoords = vec2( 0.5, 0.0 ) + vec2( 0.5*d.x, d.y )/da.z;
-    
-    // const float margin = 0.001 ;
-    
-    // if ( tcoords.x < margin || 1.0-margin < tcoords.x   )
-    //     return vec3( 0.0, 0.0, 0.0 );
+   if ( u_solo_primarios )
+      return vec3( 0.0, 0.2, 0.8 );
+
+    float b = max( 0.0, dot( ray.dir, scene.sun_dir ) );
+    if ( 1.0-scene.sun_ap_sin < b )
+        return vec3( 1.0,1.0,1.0 );
         
-    // if ( tcoords.y < margin || 1.0-margin < tcoords.y )
-    //     return vec3( 0.0, 0.0, 0.0 );
-    
-   	// vec2 tc2 = (tcoords-vec2(margin,margin))/(1.0-2.0*margin) ;
-    // const float nrep = 2.0 ;
+    vec3 d = vec3( ray.dir.x, ray.dir.y/2.0, ray.dir.z ),
+         da = abs( d );
+
+    vec2 cct ;
+    const float fv = 1.5 ;
+
+    vec2 par ;
+    if ( d.y > 0.2  ) // max is 1.5*Y (use x,z)
+    {
+        cct = vec2( 0.5, 0.01 ) ;
+    }
+    else 
+    {
+        const float pi = 3.1415927 ;
+
+        const float nreps_ang = 8.0 ;
+        float ang01 = ((atan( d.x, d.z ) + 0.5*pi) / pi );
+        float angn  = nreps_ang*ang01 ;
+        float angf  = fract( angn );
+        int   angi  = int(angn);
+
+        if ( angi % 2 == 1 )
+            angf = 1.0-angf ;
+            
         
-    // vec4 col = texture( iChannel0, fract( nrep*tc2 ));
-    // return 1.0*pow( col.rgb, 2.0*vec3(1.0, 1.0, 1.0) ) ;
+        cct = vec2( angf, max( 0.5, 5.0*(1.0-d.y)) );
+    }
+
+    vec4 col = texture( u_textura_0, fract( cct ));
+    return 1.0*pow( col.rgb, 2.0*vec3(1.0, 1.0, 1.0) ) ;
+    //return col.rgb ;
     
 }
 // --------------------------------------------------------------------
@@ -719,19 +496,20 @@ InterStat scene_intersect( in Ray ray )
    is.ray    = ray ;
 
    if ( ray.obj_id != id_sphere1 )
-   	 sphere_intersect( scene.sphere1, is );
-   
+         sphere_intersect( scene.sphere1, is );
+
    if ( ray.obj_id != id_sphere2 )
-   	 sphere_intersect( scene.sphere2, is );
-    
-   //if ( ray.obj_id != id_sphere3 )
-   	 sphere_intersect( scene.sphere3, is );
-    
-   //if ( ray.obj_id != id_sphere4 )
-   	 sphere_intersect( scene.sphere4, is );
-      
+         sphere_intersect( scene.sphere2, is );
+   
+   sphere_intersect( scene.sphere3, is );
+   
+   sphere_intersect( scene.sphere4, is );
+
+   if ( ray.obj_id != id_sphere5 )
+         sphere_intersect( scene.sphere5, is );
+   
    if ( ray.obj_id != id_base_plane )
-     horizon_plane_intersection( id_base_plane, is ); 
+      horizon_plane_intersection( id_base_plane, is ); 
    
    return is ;
 }
@@ -740,22 +518,25 @@ InterStat scene_intersect( in Ray ray )
 
 vec3 scene_color( in InterStat is, out ShadingPoint sp )
 {
-    if ( is.id_hit == id_base_plane )
-       return horizon_plane_color( is, sp );
-    
-    if ( is.id_hit == id_sphere1 )
-      return sphere_color( scene.sphere1, is, sp  );
-     
-    if ( is.id_hit == id_sphere2 )
-       return sphere_color( scene.sphere2, is, sp  );
-    
-    if ( is.id_hit == id_sphere3 )
-       return sphere_color( scene.sphere3, is, sp  );
-    
-    if ( is.id_hit == id_sphere4 )
-       return sphere_color( scene.sphere4, is, sp  );
-      
-    return background_color( is.ray ) ;
+   if ( is.id_hit == id_base_plane )
+      return horizon_plane_color( is, sp );
+   
+   if ( is.id_hit == id_sphere1 )
+   return sphere_color( scene.sphere1, is, sp  );
+   
+   if ( is.id_hit == id_sphere2 )
+      return sphere_color( scene.sphere2, is, sp  );
+   
+   if ( is.id_hit == id_sphere3 )
+      return sphere_color( scene.sphere3, is, sp  );
+   
+   if ( is.id_hit == id_sphere4 )
+      return sphere_color( scene.sphere4, is, sp  );
+
+   if ( is.id_hit == id_sphere5 )
+      return sphere_color( scene.sphere5, is, sp  );
+   
+   return background_color( is.ray ) ;
 }
 // --------------------------------------------------------------------
 // computes the reflected ray, the classical formula for the direction 
@@ -829,6 +610,12 @@ vec3 ray_color( in Ray ray )
 {
    int  n = 0;     // number of entries already in the stack 
    vec3 res_color; // resulting color
+   int max_n_efectivo ;
+
+   if ( u_solo_primarios )
+      max_n_efectivo = 1 ;
+   else 
+      max_n_efectivo = max_n_stack ;
 
    // push the first ray
    stack[n].ray       = ray ;
@@ -872,7 +659,7 @@ vec3 ray_color( in Ray ray )
      stack[itop].color = scene_color( is, sp );    
       
      // (3) push child rays if neccesary   
-     if ( inters && (n < max_n_stack) )
+     if ( inters && (n < max_n_efectivo) )
      {  
         float kps = scene.materials[is.id_hit].kps ;
          
@@ -924,7 +711,9 @@ vec3 ray_color( in Ray ray )
 vec4 AA_pixel_color( in vec2 pixel_coords )
 {
     vec3 sum = vec3( 0.0, 0.0, 0.0 );
-    const float n_aa_f = float(n_aa);
+    //const float n_aa_f = float(n_aa);
+    int   n_aa  = u_naa ;
+    float n_aa_f = float(n_aa);
 
     for( int i = 0 ; i < n_aa ; i++ )
     {
@@ -961,17 +750,17 @@ void main(  )
     vec3 cam_look_at = vec3( -0.4, 0.4, 0.5 ) 
                           + cos( iTime )*vec3(1.0,0.0,0.0)
                           + sin( iTime )*vec3(0.0,0.1,0.3) ;
-    float dist = 2.0 ;
+    
 
-    scene.camera  = compute_camera( cam_look_at, dist );
+    scene.camera  = compute_camera( cam_look_at, u_cam_dist );
     scene.sun_dir = normalize( vec3( 0.2, 1.2, 1.0 ) );
     scene.sun_ap_sin = 0.003 ;
     
     // base plane 
     
-    scene.materials[id_base_plane].kd  = 0.6;
-    scene.materials[id_base_plane].kps = 0.0;
-    scene.materials[id_base_plane].kph = 0.7;
+    scene.materials[id_base_plane].kd  = 0.5;
+    scene.materials[id_base_plane].kps = 0.2;
+    scene.materials[id_base_plane].kph = 0.5;
     scene.materials[id_base_plane].kt  = 0.0;
     
     // sphere 1 
@@ -983,7 +772,7 @@ void main(  )
     
     scene.materials[id_sphere1].kd  = 0.6;
     scene.materials[id_sphere1].kph = 0.6;
-    scene.materials[id_sphere1].kps = 0.4;
+    scene.materials[id_sphere1].kps = 0.5;
     scene.materials[id_sphere1].kt  = 0.0;
     
     
@@ -1026,19 +815,20 @@ void main(  )
     scene.materials[id_sphere4].kps = 0.0;
     scene.materials[id_sphere4].kt  = 1.0;
     
-    /**
+    
     // sphere 5 
 
     scene.sphere5.id      = id_sphere5 ;
     scene.sphere5.center  = vec3( 0.9, 0.25, 0.0 );
     scene.sphere5.radius  = 0.25 ;
-    scene.sphere5.color   = vec3( 1.0, 1.0, 1.0 );
+    scene.sphere5.color   = vec3( 0.6, 0.8, 0.0 );
 
-    scene.materials[id_sphere5].kd  = 0.0;
-    scene.materials[id_sphere5].kph = 0.0;
-    scene.materials[id_sphere5].kps = 0.2;
-    scene.materials[id_sphere5].kt  = 0.8;
+    scene.materials[id_sphere5].kd  = 0.5;
+    scene.materials[id_sphere5].kph = 0.7;
+    scene.materials[id_sphere5].kps = 0.0;
+    scene.materials[id_sphere5].kt  = 0.0;
     
+    /**
     // sphere 6 
 
     scene.sphere6.id      = id_sphere6 ;

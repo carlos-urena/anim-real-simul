@@ -5,10 +5,9 @@ import { Log, ComprErrorGL, Assert, html, Milisegundos,
        } from "./utilidades.js"
 import { Cauce, CrearCauce } from "./cauce.js"
 import { ObjetoVisualizable } from "./objeto-visu.js"
-import { CamaraOrbital, Viewport } from "./camaras.js"
 import { Vec3, Vec4, Mat4, CMat4, Vec3DesdeColorHex } from "./vec-mat.js"
 import { Textura } from "./texturas.js"
-import { CrearInputCheckbox, CrearSelector, CrearInputColor, CrearInputSlider } from "./controles.js"
+import { CrearInputCheckbox, CrearSelector, CrearInputColor, CrearInputSlider, CrearInputSliderEntero } from "./controles.js"
 
 // -------------------------------------------------------------------
 
@@ -38,7 +37,6 @@ export class AplicacionWRT
     */
    private gl_act : WebGL2RenderingContext | WebGLRenderingContext
 
-   
    /**
     * elemento html (de tipo 'canvas') sobre el que se realiza el rendering
     */
@@ -64,30 +62,18 @@ export class AplicacionWRT
    // estado del ratón 
    private estado_raton : EstadoRaton = new EstadoRaton
 
-   
-   
+   // textura del fondo
+   private textura_fondo : Textura | null = null
+
    // elemento HTML (div) en el pie de la página, donde se visualizan los mensajes de estado 
    // (null al principio o si no se encuentra)
    private pie : HTMLElement | null = null 
 
-   
    // cuadrado que dibujamos para lanzar el FS de ray-tracing
    private cuadrado : Cuadrado 
 
    // objeto que actualmente se está visualizando 
    private indice_objeto_actual : number = 0 
-
-   // true si queremos visualizar aristas, false si no,
-   private visualizar_aristas : boolean = false 
-
-   // elemento HTML de tipo 'input' (checkbox) para el botón de las aristas
-   private input_boton_aristas : HTMLInputElement | null = null
-
-   // true si queremos visualizar las normales, false si no,
-   private visualizar_normales : boolean = false 
-
-   // elemento HTML de tipo 'input' (checkbox) para el botón de visualizar normales
-   private input_boton_normales : HTMLInputElement | null = null
 
    // elemento HTML de tipo 'input' para el slider del parámetro S
    private input_param_S : HTMLInputElement | null = null
@@ -101,7 +87,9 @@ export class AplicacionWRT
    // elemento HTML de tipo 'input' (color) para el color inicial al visualizar un frame
    private input_color_defecto : HTMLInputElement | null = null 
 
-  
+   // elemento HTML de tipo 'input' para el slider de la raiz número de muestras por pixel
+   private input_naa : HTMLInputElement | null = null 
+
    // índice de la fuente de luz actual
    private ind_fuente : number = 0
 
@@ -111,18 +99,17 @@ export class AplicacionWRT
    // indica si la iluminación está activada o no 
    private iluminacion : boolean = true
 
-  
 
-   // estructura con algunos objetos de test
-   //private objs_test : ObjsTest
+   // ángulos de la cámara en grados 
 
-    // cámara en uso
-    //private camara : CamaraOrbital 
+   private ac_long_grad : number = 45.0 
+   private ac_lat_grad  : number = 45.0 
 
-    // ángulos de la cámara en grados 
+   // (delta) de la distancia de la cámara
+   private cam_dist : number = 2.0
 
-    private ac_long_grad : number = 45.0 
-    private ac_lat_grad  : number = 45.0 
+   // raiz del número de muestras por pixel
+   private naa : number = 1 
    
    // -------------------------------------------------------------------------
    
@@ -250,13 +237,14 @@ export class AplicacionWRT
 
       // crear los elementos de controles de la aplicación (elementos HTML)
       this.crearElementosControles()
+
+      // cargar una textura del cielo
+      this.textura_fondo = await Textura.crear("imgs/nubes.png")
       
       // redimensionar el canvas y visualizar la 1a vez
       this.redimensionarVisualizar()
 
-      this.estado = "Inicialización completa."
-
-      //Log(`${nombref} fin`)
+      this.estado = "Inicialización completa."      
    }
    // -------------------------------------------------------------------------
 
@@ -311,40 +299,7 @@ export class AplicacionWRT
          throw Error(`AplicacionWRT.gl: se ha intentado leer el contexto actual, pero es nulo`)
       return this.gl_act 
    }
-   // ------------------------------------------------------------------------- 
    
-   /**
-    * Lee si la ilumniación está activada o no lo está
-    */
-   public get iluminacion_activada() : boolean 
-   { 
-      return this.iluminacion 
-   }
-   // ------------------------------------------------------------------------- 
-   /**
-    * Crea el check box para visualizar aristas si/no 'this.input_boton_aristas'
-    */
-   private crearCheckboxAristas()
-   {
-      const nombref : string = 'AplicacionWRT.crearBotonAristas'
-
-      this.input_boton_aristas = CrearInputCheckbox( this.controles, this.visualizar_aristas,
-                                       'id_boton_aristas', 'Visu.&nbsp;aristas' )
-      this.input_boton_aristas.onclick = () => this.fijarVisualizarAristas( ! this.visualizar_aristas )
-   }
-   // ------------------------------------------------------------------------- 
-
-   /**
-    * Crea el check box para visualizar aristas si/no 'this.input_boton_normales'
-    */
-   private crearCheckboxNormales()
-   {
-      const nombref : string = 'AplicacionWRT.crearCheckboxNormales'
-
-      this.input_boton_normales = CrearInputCheckbox( this.controles, this.visualizar_normales,
-                                       'id_boton_normales', 'Visu.&nbsp;normales' )
-      this.input_boton_normales.onclick = () => this.fijarVisualizarNormales( ! this.visualizar_normales )
-   }
    // ------------------------------------------------------------------------- 
 
    /**
@@ -405,15 +360,48 @@ export class AplicacionWRT
    // -------------------------------------------------------------------------
 
    /**
+    * fija el nuevo valor de la raiz del número de muestras por pixel
+    * @param nuevo_naa nuevo valor
+    */
+   private fijarNAA( nuevo_naa : string ) : void
+   {
+      const nombref : string = 'AplicacionWRT.fijarParamS:'
+      let nuevo_naa_int = parseInt( nuevo_naa )
+      if ( nuevo_naa_int != this.naa )
+      {
+         this.naa = nuevo_naa_int 
+         let msg = `Nuevo valor de naa == ${this.naa}`
+         this.estado = msg
+         this.visualizarFrame()
+      }
+
+      //
+   }
+   // -------------------------------------------------------------------------
+
+   /**
+    * Crea un input tipo 'range slider' para el NAA
+    */
+   private crearSliderNAA() : void  
+   {
+      this.input_naa = CrearInputSliderEntero( this.controles, 1, 1, 9, 0.01, "id_slider_naa", "Núm. mpp. (raíz)" )
+     
+      //sl.oninput = (e) => this.fijarColorDefecto( Vec3DesdeColorHex( this.input_color_defecto!.value ))
+      this.input_naa.oninput = (e) => this.fijarNAA( this.input_naa!.value ) 
+   }
+   // -------------------------------------------------------------------------
+
+   /**
     * Crea diversos controles
     */
    private crearElementosControles()
    {
       const nombref : string = 'AplicacionWRT.crearElementosControles:'
 
-      this.crearCheckboxAristas()
-      this.crearCheckboxNormales()
+      //this.crearCheckboxAristas()
+      //this.crearCheckboxNormales()
       this.crearCheckboxIluminacion()
+      this.crearSliderNAA()
       this.crearInputColorDefecto()
       this.crearSliderParamS()
 
@@ -579,6 +567,10 @@ export class AplicacionWRT
       cauce.fijarParamS( this.param_S )
       cauce.fijarNumColsRows( ancho, alto )
       cauce.fijarAngCamGrad( this.ac_long_grad, this.ac_lat_grad )
+      cauce.fijarCamDist( this.cam_dist )
+      cauce.fijarSoloPrimarios( ! this.iluminacion )
+      cauce.fijarNaa( this.naa )
+      this.textura_fondo?.activar()
 
       this.cuadrado.visualizar()
       
@@ -648,43 +640,7 @@ export class AplicacionWRT
          this.input_color_defecto.value = this.color_defecto.hexColorStr() 
       this.visualizarFrame()
    }
-   // ------------------------------------------------------------------------------------
    
-   /**
-    * Activa o desactiva la visualización de aristas
-    * 
-    * @param nuevo_visualizar_aristas (Boolean) true para activar, false para desactivar 
-    */
-   fijarVisualizarAristas( nuevo_visualizar_aristas : boolean  ) : void 
-   {
-      const nombref = 'AplicacionWRT.fijarVisualizarAristas'
-      this.visualizar_aristas = nuevo_visualizar_aristas 
-
-      if ( this.input_boton_aristas != null )
-         this.input_boton_aristas.checked = this.visualizar_aristas 
-      const msg : string = `Visualizar aristas: ${this.visualizar_aristas ? "activado" : "desactivado"}`
-      this.estado = msg 
-      this.visualizarFrame()
-   }
-    // ------------------------------------------------------------------------------------
-   
-   /**
-    * Activa o desactiva la visualización de normales
-    * 
-    * @param nuevo_visualizar_normales (Boolean) true para activar, false para desactivar 
-    */
-   fijarVisualizarNormales( nuevo_visualizar_normales : boolean  ) : void 
-   {
-      const nombref = 'AplicacionWRT.fijarVisualizarNormales'
-      this.visualizar_normales = nuevo_visualizar_normales 
-
-      if ( this.input_boton_normales != null )
-         this.input_boton_normales.checked = this.visualizar_normales 
-      const msg : string = `Visualizar normales: ${this.visualizar_normales ? "activado" : "desactivado"}`
-      this.estado = msg 
-      this.visualizarFrame()
-   }
-
     // ------------------------------------------------------------------------------------
    
    /**
@@ -719,18 +675,9 @@ export class AplicacionWRT
       
       switch ( e.code )
       {
-         case 'KeyW' : 
-            this.fijarVisualizarAristas( ! this.visualizar_aristas ) 
+         case 'KeyI' : 
+            Log("Se ha pulsado la tecla 'I'")
             break
-         case 'KeyN' : 
-            this.fijarVisualizarNormales( ! this.visualizar_normales ) 
-            break
-         case 'KeyE' :  // producir un error al pulsar E (debug) 
-            //Log(`SE HA PULSADO 'E'`)
-            //Assert( 0.0 < 1.0 && 1.0 < 0.0 )
-            //Assert( 0.0 < 1.0 && 1.0 < 0.0, `esto es un assert imposible de cumplir, 1.0 < 0.0` ) // salta siempre
-            //let p = await LeerArchivoTexto("pepe.txt")  //--> para probar esto hay que hacer 'async' esta FGE
-            break 
       }
       return false 
    }
@@ -754,8 +701,8 @@ export class AplicacionWRT
       const dv : number =  e.movementY 
 
       // actualizar ángulos de cámara
-      this.ac_long_grad = this.ac_long_grad + dh 
-      this.ac_lat_grad  = this.ac_lat_grad + dv 
+      this.ac_long_grad = this.ac_long_grad + 3.0*dh 
+      this.ac_lat_grad  = this.ac_lat_grad + 3.0*dv 
 
       this.visualizarFrame()
       return false
@@ -791,14 +738,22 @@ export class AplicacionWRT
     */
    fgeRatonRueda( e : WheelEvent ) : Boolean 
    {
-      const nombref = 'AplicacionWRT.botonRatonArriba'
+      const nombref = 'AplicacionWRT.botonRatonRueda'
       e.stopImmediatePropagation()
       e.preventDefault()
       
       //Log(`${nombref} rueda movida, deltaY == ${e.deltaY}, delta mode == ${e.deltaMode}`)
       const signo : number = e.deltaY >= 0.0 ? +1.0 : -1.0
 
-      //this.camara.moverZ ( signo )
+      Log(`Rueda movida, deltaY == ${e.deltaY})`)
+
+      const delta : number = e.deltaY/120.0 
+      const d : number = this.cam_dist
+      const mind : number = 0.1 
+
+      this.cam_dist = mind + (d-mind)*Math.pow( 1.04, delta )  
+      //this.cam_dist = Math.max( 0.1, this.cam_dist + 0.03*(e.deltaY/120.0) )
+
       this.visualizarFrame()
       return false
    }

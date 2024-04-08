@@ -180,12 +180,76 @@ export function CrearInputSlider( elem_padre : HTMLElement, valor_inicial : numb
 
    slider.value = `${valor_inicial}`
 
-   slider.addEventListener( 'change', () => { 
-      
+   slider.addEventListener( 'input', () => {
+   
+      Log(`on input de slider, value == ${slider.value}`)
       let span_estado = document.getElementById( id_span_estado ) as HTMLInputElement 
       if ( span_estado == null ) 
          throw new Error(`ERROR: no se ha encontrado el span con id = ${id_span_estado}`)
           
+      span_estado.innerHTML = slider.value
+   })
+
+   
+   
+   return slider
+}
+
+
+// ------------------------------------------------------------------------- 
+
+/**
+ * Crea un elemento 'slider' y lo inserta en un elemento padre (el slider solo produce valores enteros)
+ * 
+ * @param elem_padre      (HTMLElement) elemento padre donde se inserta el nuevo
+ * @param valor_inicial   (number) valor inicial del selector (entre valor min y valor max)
+ * @param valor_min       (number) valor mínimo
+ * @param valor_max       (number) valor máximo
+ * @param step            (number) minimal incremento del valor
+ * @param id              (string) identificador del elemento a crear 
+ * @param titulo          (string) texto que aparece junto al selector
+ * @returns               (HTMLInputElement) elemento slider
+ */
+export function CrearInputSliderEntero( elem_padre : HTMLElement, valor_inicial : number,
+   valor_min : number, valor_max : number, step : number,
+   id : string, titulo : string ) : HTMLInputElement
+{
+   const nombref : string = `AplicacionWRT.crearSlider (id=${id}):`
+
+   Assert( elem_padre != null, `${nombref} elemento padre es nulo` )
+   Assert( 0 < id.length , `${nombref} : el identificador está vacío`)
+   //Assert( 0 < textos_opciones.length , `${nombref} : no hay objetos en la lista de objetos`)
+
+   let texto_html : string = `<input type='range' step='${step}' min='${valor_min}' max='${valor_max}' id='${id}' class='estilo_input_slider'></input>`
+   let cont       : number = 0
+
+   let div_slider_izquierdo : HTMLDivElement = document.createElement('div')
+   let div_slider_derecho   : HTMLDivElement = document.createElement('div')
+
+   let id_span_estado   : string = `${id}_span_txt_estado`
+   let txt_span_estado  : string = `${valor_inicial}`
+
+   div_slider_izquierdo.innerHTML = `${titulo}`
+   div_slider_derecho.innerHTML =  `${texto_html}&nbsp&nbsp;&nbsp;<span id='${id_span_estado}'>${txt_span_estado}</span>`
+
+   div_slider_izquierdo.className = "estilo_div_grid_izq"
+   div_slider_derecho.className   = "estilo_div_grid_der"
+
+   elem_padre.appendChild( div_slider_izquierdo )
+   elem_padre.appendChild( div_slider_derecho )
+
+   let slider   = document.getElementById( id ) as HTMLInputElement
+
+   slider.value = `${Math.floor(valor_inicial)}`
+
+   slider.addEventListener( 'input', () => {
+
+      Log(`on input de slider entero, value == ${slider.value}`)
+      slider.value = (Math.floor( parseFloat( slider.value ) )).toString()
+      let span_estado = document.getElementById( id_span_estado ) as HTMLInputElement 
+      if ( span_estado == null ) 
+         throw new Error(`ERROR: no se ha encontrado el span con id = ${id_span_estado}`)
+
       span_estado.innerHTML = slider.value
    })
    
