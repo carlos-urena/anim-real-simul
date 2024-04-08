@@ -1,8 +1,10 @@
 # ARS: Trazador de Rayos sencillo en un fragment shader
 
 
-!(capturas/wglrt-1.png)
-!(capturas/wglrt-2.png)
+
+<img src="capturas/wglrt-1.png" width="50%">
+
+
 
 Fuentes Typescript+GLSL de un trazador de rayos sencillo. También está los prerrequisitos e instrucciones de compilación y ejecución para la aplicación Web con el trazador de rayos sencillo.
 
