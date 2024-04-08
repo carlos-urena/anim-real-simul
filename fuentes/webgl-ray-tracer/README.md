@@ -26,7 +26,7 @@ Para modificar los parámetros de visualización, se puede:
   - Mover la cámara hacia adelante y hacia atrás, con la rueda del ratón.
   - Modificar alguno de los controles que aparecen en pantalla, a saber:
       - Botón para activar o desactivar la iluminación. Inicialmente está activado, se hace _ray-tracing_ completo con rayos secundarios. Cuando se desactiva, solo se procesan los rayos primarios (no hay sombras, reflejos ni transparencias), y no se evalua el MIL.
-      - Deslizador con la raíz del número de muestras por pixel. Permite variar el valor dicha raiz (_n_) entre 1 y 9. El número total de muestras por pixel es <it>n</it><sup>2<sup> (así que podemos variar entre 1 y 91 muestras por pixel)
+      - Deslizador con la raíz del número de muestras por pixel. Permite variar el valor dicha raiz (_n_) entre 1 y 9. El número total de muestras por pixel es <it>n</it><sup>2</sup> (así que podemos variar entre 1 y 91 muestras por pixel)
       - El valor del parámetro S (entre 0 y 1), para modificar diversos aspectos del Ray-tracer (por defecto no se modifica nada).
 
 Aquí abajo se ve una captura de la aplicación con la iluminación desactivada (únicamente se procesan rayos primarios):
