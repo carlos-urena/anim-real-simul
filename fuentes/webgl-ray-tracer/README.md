@@ -17,7 +17,7 @@ Para ejecutar el servidor Web de la aplicación, es necesario antes leer los pre
 Una vez cargada la aplicación en el navegador, se puede observar la imagen creada por WebGL (a la izquierda) y un cuadro de controles (a la derecha), tal y como se ve aquí:
 
 <p align="center">
-<img src="capturas/captura-controles-ilum.png" height="300px">
+<img src="capturas/captura-controles-ilum.png" width="70%">
 </p>
 
 Para modificar los parámetros de visualización, se puede:
@@ -32,7 +32,7 @@ Para modificar los parámetros de visualización, se puede:
 Aquí abajo se ve una captura de la aplicación con la iluminación desactivada (únicamente se procesan rayos primarios):
 
 <p align="center">
-<img src="capturas/captura-controles-no-ilum.png" height="300px">
+<img src="capturas/captura-controles-no-ilum.png" width="70%">
 </p>
 
 ## Prerrequisitos: 
