@@ -10,13 +10,16 @@ precision highp float ;
 precision highp int ;
 
 uniform vec2 iResolution ; // número de columnas y filas de pixels
-uniform float u_param_s ;
+uniform float u_param_s ;  // parámetro S 
+
+uniform float u_ac_long_grad ; // ángulo de camara: longitud (en grados)
+uniform float u_ac_lat_grad ; // ángulo de camara: latitud (en grados)
 
 const vec4 iMouse = vec4( 0.0, 0.0, 0.0, 0.0 ) ;
 const float iTime = 0.0 ;
 
 // root of the number of samples for antialiasing
-const int n_aa = 5 ;
+const int n_aa = 1 ;
 
 // ----------------------------------------------------------------
 // ISLAMIC STAR PATTERN related functions
@@ -585,34 +588,9 @@ vec3 horizon_plane_shader( in ShadingPoint sp )
     float vis = sun_dir_visible( sp ) ?  1.0 : 0.5 ,
           kd  = scene.materials[sp.obj_id].kd,
           kph = scene.materials[sp.obj_id].kph ;
-    
-//#define BASE_PLANE_RELIEF
-    
-#ifdef BASE_PLANE_RELIEF 
-    
-    float delta = 0.001, k = 2.0 ;
-    vec2 p00 = sp.pos.xz ;
-    vec2 p10 = p00 + vec2( delta, 0.0 ),
-         p01 = p10 + vec2( 0.0, delta );
-    
-    vec4 col = p6mm_pattern( p00 ),
-         col01 = p6mm_pattern( p01 ),
-         col10 = p6mm_pattern( p10 );
-    
-    float v00 = col.r + col.g + col.b ,
-          v01 = col01.r + col01.g + col01.b ,
-          v10 = col10.r + col10.g + col10.b ;
-    
-    vec3 t1 = normalize( vec3( delta, k*(v10-v00), 0.0 ) ),
-         t2 = normalize( vec3( 0.0,   k*(v01-v00), delta ) );
-    
-    vec3 nor = normalize( cross( t1, t2 ) );
-    if ( nor.y < 0.0 )
-        nor = -1.0*nor ;
-#else
+
     vec4 col = p6mm_pattern( sp.pos.xz );
     vec3 nor = vec3( 0.0, 1.0, 0.0 );
-#endif
     vec3 res_color = vis*kd*col.rgb ;
     
     if ( vis == 1.0 && 0.0 < kph)
@@ -647,12 +625,15 @@ Camera compute_camera( in vec3 cam_look_at, in float dist )
     //float dist = 2.0 ;
     vec2 dxy = iMouse.xy - abs(iMouse.zw) ; // sign of .zw tells if a click happened or not...
 
+    float ahr = -10.0*u_ac_long_grad*3.14159265/180.0 ;
+    float avr = -10.0*u_ac_lat_grad*3.14159265/180.0 ;
+
     float fx   = 0.011,
           fy   = 0.01 ,
           lat0 = 0.5,
           lon0 = 0.5,
-          lon  = lon0 + fx*dxy.x,
-          lat  = max( 0.0, min( 1.5, lat0 - fy*dxy.y )),
+          lon  = lon0 + fx*(dxy.x + ahr),
+          lat  = max( 0.0, min( 1.5, lat0 - fy*(dxy.y+avr) )),
           cos_lat = cos(lat);
 
     cam.z = vec3( cos(lon)*cos_lat , sin(lat), sin(lon)*cos_lat );

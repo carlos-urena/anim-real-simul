@@ -117,7 +117,12 @@ export class AplicacionWRT
    //private objs_test : ObjsTest
 
     // cámara en uso
-    private camara : CamaraOrbital 
+    //private camara : CamaraOrbital 
+
+    // ángulos de la cámara en grados 
+
+    private ac_long_grad : number = 45.0 
+    private ac_lat_grad  : number = 45.0 
    
    // -------------------------------------------------------------------------
    
@@ -197,7 +202,7 @@ export class AplicacionWRT
 
       // Crea la cámara 3D y el objeto para visualizar los ejes
 
-      this.camara = new CamaraOrbital("cámara orbital")
+      //this.camara = new CamaraOrbital("cámara orbital")
       //this.ejes   = new Ejes( )
 
       this.cuadrado = new Cuadrado()
@@ -573,6 +578,7 @@ export class AplicacionWRT
 
       cauce.fijarParamS( this.param_S )
       cauce.fijarNumColsRows( ancho, alto )
+      cauce.fijarAngCamGrad( this.ac_long_grad, this.ac_lat_grad )
 
       this.cuadrado.visualizar()
       
@@ -744,12 +750,14 @@ export class AplicacionWRT
 
       Log(`${nombref} movement x,y == ${e.movementX} ${e.movementY}`)
 
-      const dh : number = -0.3*e.movementX
-      const dv : number =  0.3*e.movementY 
+      const dh : number = -e.movementX
+      const dv : number =  e.movementY 
 
-      this.camara.moverHV( dh, dv )
+      // actualizar ángulos de cámara
+      this.ac_long_grad = this.ac_long_grad + dh 
+      this.ac_lat_grad  = this.ac_lat_grad + dv 
+
       this.visualizarFrame()
-
       return false
    }
    // ------------------------------------------------------------------------------------
@@ -790,7 +798,7 @@ export class AplicacionWRT
       //Log(`${nombref} rueda movida, deltaY == ${e.deltaY}, delta mode == ${e.deltaMode}`)
       const signo : number = e.deltaY >= 0.0 ? +1.0 : -1.0
 
-      this.camara.moverZ ( signo )
+      //this.camara.moverZ ( signo )
       this.visualizarFrame()
       return false
    }

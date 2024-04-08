@@ -61,7 +61,9 @@ export class Cauce
     private programa! : WebGLProgram 
 
     private param_s : number = 0.0 
-
+    private ac_long_grad = 0.0 
+    private ac_lat_grad  = 0.0
+    
     // contexto WebGL, dado en el constructor 
     private gl! : WebGLRenderingContext | WebGL2RenderingContext 
 
@@ -69,9 +71,10 @@ export class Cauce
     private fragment_shader!  : WebGLShader 
     private vertex_shader!    : WebGLShader  
 
-    private loc_param_s  : WebGLUniformLocation | null = null
-    private loc_iResolution : WebGLUniformLocation | null = null
-
+    private loc_param_s      : WebGLUniformLocation | null = null
+    private loc_iResolution  : WebGLUniformLocation | null = null
+    private loc_ac_long_grad : WebGLUniformLocation | null = null
+    private loc_ac_lat_grad  : WebGLUniformLocation | null = null
     
     // ---------------------------------------------------------------------------
     // Métodos 
@@ -121,7 +124,12 @@ export class Cauce
         // obtener las 'locations' de los parámetros uniform       
         this.loc_param_s = this.leerLocation( "u_param_s" )
         this.loc_iResolution = this.leerLocation( "iResolution" );
-        gl.uniform1f( this.loc_param_s, this.param_s )
+        this.fijarParamS( this.param_s )
+
+        this.loc_ac_long_grad = this.leerLocation( "u_ac_long_grad")
+        this.loc_ac_lat_grad = this.leerLocation( "u_ac_lat_grad")
+
+        this.fijarAngCamGrad( this.ac_long_grad, this.ac_lat_grad )
 
         // desactivar objeto programa
         gl.useProgram( null ); 
@@ -276,7 +284,7 @@ export class Cauce
      */
     public fijarParamS( nue_param_s : number ) : void
     {
-        console.log(`param s == ${nue_param_s}`)
+        //console.log(`param s == ${nue_param_s}`)
         this.param_s = nue_param_s
         this.gl.uniform1f( this.loc_param_s, this.param_s ) // cambia parámetro del shader
     }
@@ -286,6 +294,17 @@ export class Cauce
     {
         let ires = new Float32Array([ nuevo_num_cols, nuevo_num_rows ])
         this.gl.uniform2fv( this.loc_iResolution, ires  )
+    }
+    // ---------------------------------------------------------------------------
+
+
+    public fijarAngCamGrad( nuevo_ac_long_grad : number, nuevo_ac_lat_grad : number ) : void 
+    {
+        this.ac_lat_grad = nuevo_ac_lat_grad
+        this.ac_long_grad = nuevo_ac_long_grad 
+
+        this.gl.uniform1f( this.loc_ac_long_grad, this.ac_long_grad )
+        this.gl.uniform1f( this.loc_ac_lat_grad, this.ac_lat_grad )
     }
 
     
