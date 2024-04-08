@@ -2,7 +2,10 @@
 
 
 
-<img src="capturas/wglrt-1.png" width="50%">
+<center>
+<img src="capturas/wglrt-1.png" width="45%">
+<img src="capturas/wglrt-1.png" width="45%">
+</center>
 
 
 
