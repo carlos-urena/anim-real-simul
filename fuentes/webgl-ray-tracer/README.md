@@ -1,7 +1,7 @@
 # ARS: Trazador de Rayos sencillo en un fragment shader
 
 
-<img src="capturas/wglrt-1.png" height="200px"><img src="capturas/wglrt-2.png" height="200px">
+<img src="capturas/wglrt-1.png" height="350px"><img src="capturas/wglrt-2.png" height="350px">
 
 
 
