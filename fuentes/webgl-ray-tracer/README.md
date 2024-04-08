@@ -1,8 +1,12 @@
 # ARS: Trazador de Rayos sencillo en un fragment shader
 
-Prerequisitos e instrucciones de compilación y ejecución para la aplicación Web con el trazador de rayos sencillo.
 
-## Prerequisitos: 
+!(capturas/wglrt-1.png)
+!(capturas/wglrt-2.png)
+
+Fuentes Typescript+GLSL de un trazador de rayos sencillo. También está los prerrequisitos e instrucciones de compilación y ejecución para la aplicación Web con el trazador de rayos sencillo.
+
+## Prerrequisitos: 
 
 + Intérprete de *python3* para lanzar el servidor
 + Compilador de *typescript* para compilar fuentes
