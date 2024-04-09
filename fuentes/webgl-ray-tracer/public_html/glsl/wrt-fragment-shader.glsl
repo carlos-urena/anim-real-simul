@@ -9,26 +9,20 @@
 precision highp float ;
 precision highp int ;
 
-uniform vec2 iResolution ; // número de columnas y filas de pixels
-uniform float u_param_s ;  // parámetro S 
+// parámetros uniform
+uniform vec2  iResolution ;     // número de columnas y filas de pixels
+uniform float u_param_s ;       // parámetro S 
+uniform float u_ac_long_grad ;  // ángulo de camara: longitud (en grados)
+uniform float u_ac_lat_grad ;   // ángulo de camara: latitud (en grados)
+uniform bool  u_solo_primarios; // true --> únicamente lanzar rayos primarios
+uniform float u_cam_dist ;      // distancia de la cámara al look at
+uniform int   u_naa ;           // raiz del número de muestras por pixel
 
-uniform float u_ac_long_grad ; // ángulo de camara: longitud (en grados)
-uniform float u_ac_lat_grad ; // ángulo de camara: latitud (en grados)
+// textura
+uniform sampler2D u_textura_0 ; // sampler de textura para la imagen de las nubes del fondo.
 
-uniform bool u_solo_primarios ;
-
-uniform float u_cam_dist ; // distancia de la cámara al look at
-uniform int u_naa ; // raiz del número de muestras por pixel
-
-uniform sampler2D u_textura_0 ;
-
-const vec4 iMouse = vec4( 0.0, 0.0, 0.0, 0.0 ) ;
-const float iTime = 0.0 ;
-
-const float glass_ri = 1.3 ; // refractive index of glass
-
-// root of the number of samples for antialiasing
-//const int n_aa = 1 ;
+// algunos parámetros adicionales 
+float glass_ri = 1.5 ; // índice de refracción del vidrio ("glass refraction index")
 
 // ---------------------------------------------------------------------
 // Color for base plane pattern
@@ -78,10 +72,12 @@ struct Ray
 
 struct Material
 {
-    float kd,    // diffuse reflection coefficient (in [0,1])
-          kps ,  // perfect specular reflection coefficient (in [0,1])
-          kph,   // phong component
-          kt ;   // transmitted component (refracted)
+    float 
+      ka,    // ambient light coefficient.
+      kd,    // diffuse reflection coefficient (in [0,1])
+      kps ,  // perfect specular reflection coefficient (in [0,1])
+      kph,   // phong reflection coefficient
+      kt ;   // transmitted component (refracted)
 } ;
     
 // --------------------------------------------------------------------
@@ -313,27 +309,30 @@ vec3 phong_component( in vec3 nor, in vec3 view, in vec3 light )
 
 vec3 sphere_shader( in Sphere sphere, in ShadingPoint sp )
 {
-    if ( u_solo_primarios )
-    {
-      float b = max( 0.2, sp.nor.y );
-      return b*sphere.color ;
-    }
+   if ( u_solo_primarios )
+   {
+   float b = max( 0.2, sp.nor.y );
+   return b*sphere.color ;
+   }
 
-    vec3 res = vec3( 0.0, 0.0, 0.0 ) ;
-    
-    if ( sun_dir_visible( sp ) )
-    {
-      float ldn = max( 0.0, dot( sp.nor, scene.sun_dir )),
-            kd  = scene.materials[sp.obj_id].kd ,
-            kph = scene.materials[sp.obj_id].kph ;
-        
+   float ka  = scene.materials[sp.obj_id].ka ;
+
+   vec3 res = ka*sphere.color ;
+   
+   if ( sun_dir_visible( sp ) )
+   {
+      float 
+         ldn = max( 0.0, dot( sp.nor, scene.sun_dir )),
+         kd  = scene.materials[sp.obj_id].kd ,
+         kph = scene.materials[sp.obj_id].kph ;
+      
       res += ldn*kd*sphere.color ;
-        
+         
       if ( 0.0 < kph )
          res += kph*phong_component( sp.nor, sp.view, scene.sun_dir ); 
-    }
+   }
 
-    return res ;
+   return res ;
 }
 
 // --------------------------------------------------------------------
@@ -358,12 +357,13 @@ vec3 horizon_plane_shader( in ShadingPoint sp )
       return FloorPattern( sp.pos.xz ).rgb;
 
     float vis = sun_dir_visible( sp ) ?  1.0 : 0.5 ,
+          ka  = scene.materials[sp.obj_id].ka,
           kd  = scene.materials[sp.obj_id].kd,
           kph = scene.materials[sp.obj_id].kph ;
 
     vec4 col = FloorPattern( sp.pos.xz );
     vec3 nor = vec3( 0.0, 1.0, 0.0 );
-    vec3 res_color = vis*kd*col.rgb ;
+    vec3 res_color = (ka+vis*kd)*col.rgb ;
     
     if ( vis == 1.0 && 0.0 < kph)
        res_color += kph*phong_component(nor,sp.view,scene.sun_dir) ; 
@@ -393,19 +393,11 @@ Camera compute_camera( in vec3 cam_look_at, in float dist )
 
     Camera cam ;
     vec3 cam_vup = vec3( 0.0, 1.0, 0.0 );
-    //float dist = 2.0 ;
-    vec2 dxy = iMouse.xy - abs(iMouse.zw) ; // sign of .zw tells if a click happened or not...
+    
+    float lon = u_ac_long_grad*3.14159265/180.0 ; // ángulo horizontal en radianes 
+    float lat = u_ac_lat_grad*3.14159265/180.0 ;  // angulo vertical en radianes
 
-    float ahr = -10.0*u_ac_long_grad*3.14159265/180.0 ;
-    float avr = -10.0*u_ac_lat_grad*3.14159265/180.0 ;
-
-    float fx   = 0.011,
-          fy   = 0.01 ,
-          lat0 = 0.5,
-          lon0 = 0.5,
-          lon  = lon0 + fx*(dxy.x + ahr),
-          lat  = max( 0.0, min( 1.5, lat0 - fy*(dxy.y+avr) )),
-          cos_lat = cos(lat);
+    float cos_lat = cos(lat);
 
     cam.z = vec3( cos(lon)*cos_lat , sin(lat), sin(lon)*cos_lat );
 
@@ -563,7 +555,7 @@ Ray reflected_ray( in ShadingPoint sp )
 
 Ray get_refracted_ray( in ShadingPoint sp )
 {
-   const float glass_ri_inv = 1.0/glass_ri ;
+   float glass_ri_inv = 1.0/glass_ri ;
     
    vec3 l = -sp.view , // wikipedia formulation uses l "from light to shading point"
         no = sp.nor ;
@@ -768,21 +760,17 @@ layout (location = 0) out vec4 frag_color ;
 
 void main(  )
 {
-   
-
     // scene parameters
     
-    vec3 cam_look_at = vec3( -0.4, 0.4, 0.5 ) 
-                          + cos( iTime )*vec3(1.0,0.0,0.0)
-                          + sin( iTime )*vec3(0.0,0.1,0.3) ;
+    vec3 cam_look_at = vec3( -0.3, 0.4, 0.0 ) ;
     
-
-    scene.camera  = compute_camera( cam_look_at, u_cam_dist );
-    scene.sun_dir = normalize( vec3( 0.2, 1.2, 1.0 ) );
+    scene.camera     = compute_camera( cam_look_at, u_cam_dist );
+    scene.sun_dir    = normalize( vec3( 0.2, 0.6, 1.0 ) );
     scene.sun_ap_sin = 0.003 ;
     
     // base plane 
     
+    scene.materials[id_base_plane].ka  = 0.0;
     scene.materials[id_base_plane].kd  = 0.5;
     scene.materials[id_base_plane].kps = 0.2;
     scene.materials[id_base_plane].kph = 0.5;
@@ -795,6 +783,7 @@ void main(  )
     scene.sphere1.radius  = 0.5 ;
     scene.sphere1.color   = vec3(0.5,0.5,1.0);
     
+    scene.materials[id_sphere1].ka  = 0.0;
     scene.materials[id_sphere1].kd  = 0.6;
     scene.materials[id_sphere1].kph = 0.6;
     scene.materials[id_sphere1].kps = 0.5;
@@ -808,6 +797,7 @@ void main(  )
     scene.sphere2.radius  = 0.4 ;
     scene.sphere2.color   = vec3( 1.0, 0.2, 0.2 );
 
+    scene.materials[id_sphere2].ka  = 0.0;
     scene.materials[id_sphere2].kd  = 0.3;
     scene.materials[id_sphere2].kph = 0.3;
     scene.materials[id_sphere2].kps = 0.4;
@@ -816,13 +806,15 @@ void main(  )
     // sphere 3 (outer sphere in the transparent ball)
     
     float tr_sph_rad    = 0.35 ;
-    vec3  tr_sph_center = vec3( 1.0, tr_sph_rad, 0.6 ) ;
+    vec3  tr_sph_center = vec3( 1.0, tr_sph_rad+0.001, 0.6 ) ;
 
+    
     scene.sphere3.id      = id_sphere3 ;
     scene.sphere3.center  = tr_sph_center;
     scene.sphere3.radius  = tr_sph_rad ;
     scene.sphere3.color   = vec3( 1.0, 1.0, 1.0 );
 
+    scene.materials[id_sphere3].ka  = 0.0;
     scene.materials[id_sphere3].kd  = 0.0;
     scene.materials[id_sphere3].kph = 0.0;
     scene.materials[id_sphere3].kps = 0.3;
@@ -832,47 +824,35 @@ void main(  )
 
     scene.sphere4.id      = id_sphere4 ;
     scene.sphere4.center  = tr_sph_center;
-    scene.sphere4.radius  = 0.9*tr_sph_rad ;
+    scene.sphere4.radius  = 0.85*tr_sph_rad ;
     scene.sphere4.color   = vec3( 1.0, 1.0, 1.0 );
 
+    scene.materials[id_sphere4].ka  = 0.0;
     scene.materials[id_sphere4].kd  = 0.0;
     scene.materials[id_sphere4].kph = 0.0;
     scene.materials[id_sphere4].kps = 0.0;
     scene.materials[id_sphere4].kt  = 1.0;
     
     
-    // sphere 5 
+    // sphere 5 (green non-reflective sphere)
 
     scene.sphere5.id      = id_sphere5 ;
     scene.sphere5.center  = vec3( 0.9, 0.25, 0.0 );
     scene.sphere5.radius  = 0.25 ;
     scene.sphere5.color   = vec3( 0.6, 0.8, 0.0 );
 
-    scene.materials[id_sphere5].kd  = 0.5;
-    scene.materials[id_sphere5].kph = 0.7;
+    scene.materials[id_sphere5].ka  = 0.2;
+    scene.materials[id_sphere5].kd  = 0.3;
+    scene.materials[id_sphere5].kph = 0.6;
     scene.materials[id_sphere5].kps = 0.0;
     scene.materials[id_sphere5].kt  = 0.0;
     
-    /**
-    // sphere 6 
-
-    scene.sphere6.id      = id_sphere6 ;
-    scene.sphere6.center  = vec3( 0.9, 0.25, 0.0 );
-    scene.sphere6.radius  = 0.22 ;
-    scene.sphere6.color   = vec3( 1.0, 1.0, 1.0 );
-
-    scene.materials[id_sphere6].kd  = 0.0;
-    scene.materials[id_sphere6].kph = 0.0;
-    scene.materials[id_sphere6].kps = 0.0;
-    scene.materials[id_sphere6].kt  = 1.0;
-    **/
     
-    // ----
     
     vec2 fc01 = 0.5* (vec2(1.0,1.0) + posicion );
     vec2 pixel_coords = trunc( iResolution*fc01 );
 
     frag_color = AA_pixel_color( pixel_coords ) ;
-    //frag_color = vec4( fc01.x, fc01.y, 0.0, 1.0 );
+   
                
 }

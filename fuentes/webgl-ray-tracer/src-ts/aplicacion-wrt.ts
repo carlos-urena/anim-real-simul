@@ -102,11 +102,11 @@ export class AplicacionWRT
 
    // ángulos de la cámara en grados 
 
-   private ac_long_grad : number = 45.0 
-   private ac_lat_grad  : number = 45.0 
+   private ac_long_grad : number = 26.0 
+   private ac_lat_grad  : number = 7.0 
 
    // (delta) de la distancia de la cámara
-   private cam_dist : number = 2.0
+   private cam_dist : number = 3.0
 
    // raiz del número de muestras por pixel
    private naa : number = 1 
@@ -597,6 +597,7 @@ export class AplicacionWRT
       cauce.fijarParamS( this.param_S )
       cauce.fijarNumColsRows( ancho, alto )
       cauce.fijarAngCamGrad( this.ac_long_grad, this.ac_lat_grad )
+      Log(`frame: ac_long_grad == ${this.ac_long_grad}, ac_lat_grad == ${this.ac_lat_grad}`)
       cauce.fijarCamDist( this.cam_dist )
       cauce.fijarSoloPrimarios( ! this.iluminacion )
       cauce.fijarNaa( this.naa )
@@ -727,12 +728,12 @@ export class AplicacionWRT
 
       //Log(`${nombref} movement x,y == ${e.movementX} ${e.movementY}`)
 
-      const dh : number = -e.movementX
+      const dh : number =  e.movementX
       const dv : number =  e.movementY 
 
       // actualizar ángulos de cámara
-      this.ac_long_grad = this.ac_long_grad + 3.0*dh 
-      this.ac_lat_grad  = this.ac_lat_grad + 3.0*dv 
+      this.ac_long_grad = this.ac_long_grad + dh 
+      this.ac_lat_grad  = Math.max( 0.0, Math.min( 88.0, this.ac_lat_grad + dv ))
 
       this.visualizarFrame()
       return false

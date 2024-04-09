@@ -21,7 +21,8 @@
   "extensions": {
     "recommendations": 
     [ 
-      "slevesque.shader"    // soporte para archivos .glsl en GLSL
+      "slevesque.shader",    // soporte para archivos .glsl en GLSL
+      "raczzalan.webgl-glsl-editor"  // soporte para archivos .glsl en GLSL (produce 'outline')
     ],
     "unwantedRecommendations": 
     [
