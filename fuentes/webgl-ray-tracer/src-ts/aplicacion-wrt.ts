@@ -110,6 +110,16 @@ export class AplicacionWRT
 
    // raiz del número de muestras por pixel
    private naa : number = 1 
+
+   // tipo de renderer ("webgl" o "webgl2")
+   // (inicializado en obtenerContextoWebGL)
+   private tipo_webgl : string = "no calculado"
+
+   // nombre de la GPU y del fabircante de la gpu 
+   // (inicializado en obtenerContextoWebGL)
+   private gpu_modelo      : string = "no calculado"
+   private gpu_fabricante : string = "no calculado"
+
    
    // -------------------------------------------------------------------------
    
@@ -386,7 +396,6 @@ export class AplicacionWRT
    {
       this.input_naa = CrearInputSliderEntero( this.controles, 1, 1, 9, 0.01, "id_slider_naa", "Núm. mpp. (raíz)" )
      
-      //sl.oninput = (e) => this.fijarColorDefecto( Vec3DesdeColorHex( this.input_color_defecto!.value ))
       this.input_naa.oninput = (e) => this.fijarNAA( this.input_naa!.value ) 
    }
    // -------------------------------------------------------------------------
@@ -398,8 +407,6 @@ export class AplicacionWRT
    {
       const nombref : string = 'AplicacionWRT.crearElementosControles:'
 
-      //this.crearCheckboxAristas()
-      //this.crearCheckboxNormales()
       this.crearCheckboxIluminacion()
       this.crearSliderNAA()
       this.crearInputColorDefecto()
@@ -533,11 +540,34 @@ export class AplicacionWRT
          throw Error(`${nombref} no se puede obtener un contexto del canvas, se obtiene 'null'` )
       
       if ( gl instanceof WebGL2RenderingContext )
+      {
+         this.tipo_webgl = "webgl2"
          Log(`${nombref} contexto de rendering de WebGL 2 recuperado ok`)
+      }
       else if ( gl instanceof WebGLRenderingContext )
+      {
+         this.tipo_webgl = "webgl"
          Log(`${nombref} contexto de rendering de WebGL 1 recuperado ok`)
+      }
       else 
          throw Error(`${nombref} no se puede obtener un contexto WebGL 1 ni WebGL 2 del canvas` )
+
+      let ext = gl.getExtension('WEBGL_debug_renderer_info')
+      if ( ext != null )
+      {
+         this.gpu_fabricante = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)
+         this.gpu_modelo     = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)
+         
+      }
+      else 
+      {
+         this.gpu_modelo = "no disponible"
+         this.gpu_fabricante = "no disponible"
+      }
+
+      Log(`WebGL  - tipo       : ${this.tipo_webgl}`)
+      Log(`Driver - fabricante : ${this.gpu_fabricante}`) 
+      Log(`       - modelo     : ${this.gpu_modelo}`)
 
       return gl
    }
@@ -550,7 +580,7 @@ export class AplicacionWRT
    visualizarFrame() : void 
    {
       const nombref : string = 'AplicacionWRT.visualizarFrame:' 
-      Log(`${nombref} inicio `)
+      //Log(`${nombref} inicio `)
       let gl    = this.gl_act 
       let cauce = this.cauce_actual 
 
@@ -695,7 +725,7 @@ export class AplicacionWRT
       e.stopImmediatePropagation()
       e.preventDefault()
 
-      Log(`${nombref} movement x,y == ${e.movementX} ${e.movementY}`)
+      //Log(`${nombref} movement x,y == ${e.movementX} ${e.movementY}`)
 
       const dh : number = -e.movementX
       const dv : number =  e.movementY 

@@ -352,7 +352,7 @@ export class Cauce
     public fijarCamDist( nuevo_cam_dist : number )
     {
         this.cam_dist = nuevo_cam_dist
-        Log(`Cauce.fijarCamDist: cam_dist = ${this.cam_dist}`)
+        //Log(`Cauce.fijarCamDist: cam_dist = ${this.cam_dist}`)
         this.gl.uniform1f( this.loc_cam_dist, this.cam_dist )
     }
     // ---------------------------------------------------------------------------
@@ -360,7 +360,7 @@ export class Cauce
     public fijarNaa( nuevo_naa : number ) : void 
     {
         this.naa = Math.max( 1, Math.floor(nuevo_naa) )
-        Log(`Cauce: naa = ${this.naa}`)
+        //Log(`Cauce: naa = ${this.naa}`)
         this.gl.uniform1i( this.loc_naa, this.naa )
     }
 
