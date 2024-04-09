@@ -25,6 +25,8 @@ uniform sampler2D u_textura_0 ;
 const vec4 iMouse = vec4( 0.0, 0.0, 0.0, 0.0 ) ;
 const float iTime = 0.0 ;
 
+const float glass_ri = 1.3 ; // refractive index of glass
+
 // root of the number of samples for antialiasing
 //const int n_aa = 1 ;
 
@@ -154,10 +156,10 @@ RayStackEntry  stack[max_n_stack] ;
 
 struct InterStat  // ray-scene intersection status data
 {
-    Ray   ray ;    // ray being intersected
-    float t_max,   // max. value for 't' (-1.0 if it is +infinity)
-          t_hit ;  // actual smaller positive value found for 't' (-1.0 if none)
-   	int   id_hit ; // 'id' of current object (-1 if none)
+   Ray   ray ;    // ray being intersected
+   float t_max,   // max. value for 't' (-1.0 if it is +infinity)
+         t_hit ;  // actual smaller positive value found for 't' (-1.0 if none)
+   int   id_hit ; // 'id' of current object (-1 if none)
 } ;
 
 
@@ -191,21 +193,21 @@ bool sphere_intersect( in Sphere sphere, inout InterStat is  )
       oc = is.ray.org - sphere.center;
 	float
       c  = dot(oc, oc) - (sphere.radius*sphere.radius),
-	  b  = dot(is.ray.dir, oc) ,
+	   b  = dot(is.ray.dir, oc) ,
       di = b*b - c ;   // discriminant
 
-    if ( di < 0.0 ) // no sphere-ray intersection, 'is' is not written
-        return false ;
+   if ( di < 0.0 ) // no sphere-ray intersection, 'is' is not written
+      return false ;
 
-    float
+   float
       sqrt_di = sqrt(di),
       t ;
 
-    t = -b - sqrt_di ;
+   t = -b - sqrt_di ;
 	if ( t < t_threshold )
       t = -b + sqrt_di ;
 
-    return update_is( is, t, sphere.id );
+   return update_is( is, t, sphere.id );
 }
 
 // --------------------------------------------------------------------
@@ -216,12 +218,12 @@ bool sphere_intersect( in Sphere sphere, inout InterStat is  )
 bool horizon_plane_intersection( in int plane_id, inout InterStat is )
 {
     if ( abs(is.ray.dir.y) < 1e-5 )
-       return  false ;
+      return false ;
 
-    float
+   float
       t = -is.ray.org.y / is.ray.dir.y ;
 
-    return update_is( is, t, plane_id );
+   return update_is( is, t, plane_id );
 }
 
 // --------------------------------------------------------------------
@@ -317,7 +319,7 @@ vec3 sphere_shader( in Sphere sphere, in ShadingPoint sp )
       return b*sphere.color ;
     }
 
-    vec3 res = 0.1*sphere.color ;
+    vec3 res = vec3( 0.0, 0.0, 0.0 ) ;
     
     if ( sun_dir_visible( sp ) )
     {
@@ -561,8 +563,7 @@ Ray reflected_ray( in ShadingPoint sp )
 
 Ray get_refracted_ray( in ShadingPoint sp )
 {
-   const float glass_ri = 1.3 , // refractive index of glass 
-               glass_ri_inv = 1.0/glass_ri ;
+   const float glass_ri_inv = 1.0/glass_ri ;
     
    vec3 l = -sp.view , // wikipedia formulation uses l "from light to shading point"
         no = sp.nor ;
@@ -661,39 +662,63 @@ vec3 ray_color( in Ray ray )
      // (3) push child rays if neccesary   
      if ( inters && (n < max_n_efectivo) )
      {  
-        float kps = scene.materials[is.id_hit].kps ;
+         float kps = scene.materials[is.id_hit].kps ;
+         float kt  = scene.materials[is.id_hit].kt ;
+         float vn  = abs(dot(sp.nor,sp.view));
+         bool  reflection = (0.0<kps && 0.0 < vn );// && ! sp.in_glass) ; // do reflection ?
+         int   sig_n  = reflection ? n+1 : n ;
+         bool  refraction = (sig_n < max_n_efectivo) && 0.0 < kt ; // do refraction ?
+         float spec_c = kps ; // specular reflection coefficient 
+         float refr_c = kt ; // refraction coefficient
+
+         // Use Schlick's approximation to mix reflection and refraction
+         // (see: https://en.wikipedia.org/wiki/Schlick%27s_approximation)
          
-        float vn = dot(sp.nor,sp.view);
+         if ( reflection && refraction )
+         {
+            float n0 = glass_ri ;
+            float n1 = 1.0 ;
+            float a  = (n0-n1)/(n0+n1);
+            float r0 = a*a ;
+            float b  = 1.0-vn ;
+            float c5 = b*b*b*b*b ;
+            spec_c   = r0 + (1.0-r0)*c5 ;
+            refr_c   = 1.0 - spec_c ;
+         }
+         
+      
+         // if there is reflection, push reflected ray:
+
+         if ( reflection )
+         {
+            // computed reflected ray
+            Ray refl_ray = reflected_ray( sp ); 
+               
+            // push reflected ray entry      
+            stack[n].ray       = refl_ray ;
+            stack[n].processed = false ;
+            stack[n].iparent   = itop ; 
+            stack[n].color     = vec3( 0.0, 0.0, 0.0 );
+            stack[n].weight    = spec_c ;// kps ;
+            n++ ;
+         }
             
-        if ( 0.0 < kps && 0.0 < vn && ! sp.in_glass ) // if we should compute reflected ray...
-        {
-           // computed reflected ray
-           Ray refl_ray = reflected_ray( sp ); 
-             
-           // push reflected ray entry      
-           stack[n].ray       = refl_ray ;
-           stack[n].processed = false ;
-           stack[n].iparent   = itop ; 
-           stack[n].color     = vec3( 0.0, 0.0, 0.0 );
-           stack[n].weight    = kps ;
-           n++ ;
-        }
-         
-        float kt = scene.materials[is.id_hit].kt ;
-         
-        if ( (n < max_n_stack) && 0.0 < kt )
-        {
-           // compute refracted ray
-           Ray refrac_ray = get_refracted_ray( sp );
-              
-           // push refracted ray entry      
-           stack[n].ray       = refrac_ray ;
-           stack[n].processed = false ;
-           stack[n].iparent   = itop ; 
-           stack[n].color     = vec3( 0.0, 0.0, 0.0 );
-           stack[n].weight    = kt ;
-           n++ ;  
-        }
+         // if there is refraction, push refracted ray:
+
+         if ( refraction )
+         {
+            // compute refracted ray
+            Ray refrac_ray = get_refracted_ray( sp );
+               
+            // push refracted ray entry      
+            stack[n].ray       = refrac_ray ;
+            stack[n].processed = false ;
+            stack[n].iparent   = itop ; 
+            stack[n].color     = vec3( 0.0, 0.0, 0.0 );
+            stack[n].weight    = refr_c ; // kt ;
+            
+            n++ ;  
+         }
      }
      // (4) mark the node as processed
      stack[itop].processed = true ;
@@ -801,7 +826,7 @@ void main(  )
     scene.materials[id_sphere3].kd  = 0.0;
     scene.materials[id_sphere3].kph = 0.0;
     scene.materials[id_sphere3].kps = 0.3;
-    scene.materials[id_sphere3].kt  = 0.7;
+    scene.materials[id_sphere3].kt  = 0.8;
     
     // sphere 4 (inner sphere in the transparent ball)
 
