@@ -255,3 +255,40 @@ export function CrearInputSliderEntero( elem_padre : HTMLElement, valor_inicial 
    
    return slider
 }
+
+// ------------------------------------------------------------------------- 
+
+/**
+ * Crea un elemento 'slider' y lo inserta en un elemento padre (el slider solo produce valores enteros)
+ * 
+ * @param elem_padre      (HTMLElement) elemento padre donde se inserta el nuevo
+ * @param texto           (string) texto a mostrar en el span
+ * @param id              (string) identificador del elemento con el texto
+ * @param titulo          (string) titulo del texto
+ * @return elemento 'span' con el texto
+ */
+export function CrearElementoSpanTexto( elem_padre : HTMLElement, texto: string, id : string, titulo : string ) : HTMLSpanElement
+{
+   const nombref : string = `AplicacionWRT.crearSlider (id=${id}):`
+
+   Assert( elem_padre != null, `${nombref} elemento padre es nulo` )
+   Assert( 0 < id.length , `${nombref} : el identificador está vacío`)
+   //Assert( 0 < textos_opciones.length , `${nombref} : no hay objetos en la lista de objetos`)
+
+   let div_span_izquierdo : HTMLDivElement = document.createElement('div')
+   let div_span_derecho   : HTMLDivElement = document.createElement('div')
+   
+   div_span_izquierdo.innerHTML = `${titulo}`
+   div_span_derecho.innerHTML =  `<span id='${id}'>${texto}</span>`
+
+   div_span_izquierdo.className = "estilo_div_grid_izq_alto"
+   div_span_derecho.className   = "estilo_div_grid_der_alto"
+
+   elem_padre.appendChild( div_span_izquierdo )
+   elem_padre.appendChild( div_span_derecho )
+
+   let span = document.getElementById( id ) as HTMLSpanElement
+
+   return span
+}
+

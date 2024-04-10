@@ -7,7 +7,7 @@ import { Cauce, CrearCauce } from "./cauce.js"
 import { ObjetoVisualizable } from "./objeto-visu.js"
 import { Vec3, Vec4, Mat4, CMat4, Vec3DesdeColorHex } from "./vec-mat.js"
 import { Textura } from "./texturas.js"
-import { CrearInputCheckbox, CrearSelector, CrearInputColor, CrearInputSlider, CrearInputSliderEntero } from "./controles.js"
+import { CrearInputCheckbox, CrearSelector, CrearInputColor, CrearInputSlider, CrearInputSliderEntero, CrearElementoSpanTexto } from "./controles.js"
 
 // -------------------------------------------------------------------
 
@@ -117,8 +117,11 @@ export class AplicacionWRT
 
    // nombre de la GPU y del fabircante de la gpu 
    // (inicializado en obtenerContextoWebGL)
-   private gpu_modelo      : string = "no calculado"
+   private gpu_modelo     : string = "no calculado"
    private gpu_fabricante : string = "no calculado"
+
+   // elemento span con el nombre del modelo de GPU
+   private texto_gpu_modelo  : HTMLSpanElement | null = null
 
    
    // -------------------------------------------------------------------------
@@ -398,6 +401,11 @@ export class AplicacionWRT
      
       this.input_naa.oninput = (e) => this.fijarNAA( this.input_naa!.value ) 
    }
+
+   private crearTextosInfo() : void 
+   {
+      this.texto_gpu_modelo = CrearElementoSpanTexto( this.controles, this.gpu_modelo, "texto_gpu", "GPU en uso:")
+   }
    // -------------------------------------------------------------------------
 
    /**
@@ -411,6 +419,7 @@ export class AplicacionWRT
       this.crearSliderNAA()
       this.crearInputColorDefecto()
       this.crearSliderParamS()
+      this.crearTextosInfo()
 
       Log(`${nombref} controles creados ok.`)
    }

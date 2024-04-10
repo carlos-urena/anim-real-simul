@@ -154,6 +154,28 @@ h1, h2, h3
    border-bottom-right-radius : 2px ;
 }
 
+.estilo_div_grid_izq_alto
+{
+   background-color: rgb( 20%, 20%, 20% );
+   display: flex;
+   align-items: center;
+   height : 90px ;
+   padding-left : 7px ;
+   border-top-left-radius : 2px ;
+   border-bottom-left-radius : 2px ;
+}
+
+.estilo_div_grid_der_alto
+{
+   background-color: rgb( 20%, 20%, 20% );
+   display: flex;
+   align-items: center;
+   height : 90px ;
+   padding-right : 7px ;
+   border-top-right-radius : 2px ;
+   border-bottom-right-radius : 2px ;
+}
+
 
 /**** estilos para controles ******/
 
